@@ -33,7 +33,21 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+*.swo
 
 # Jenkins (if running locally)
 .jenkins/
 jenkins_home/
+
+# Docker
+.dockerignore
+
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
+pids/
