@@ -1,20 +1,28 @@
-import { useEffect, useState } from "react";
+import { Routes, Route } from 'react-router-dom';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
-function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    fetch("http://localhost:3001/api/hello")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => console.error(err));
-  }, []);
-
+// ── Placeholder pages — replace these as you build them out ──────────────────
+function Home() {
   return (
     <div>
-      <h1>Hello from React</h1>
-      <h2>{message}</h2>
+      <h1>Welcome to the app</h1>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/"          element={<Home />} />
+      <Route path="/login"     element={<Login />} />
+      <Route path="/register"  element={<Register />} />
+
+      {/* Example protected routes — uncomment as you build these pages */}
+      {/* <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} /> */}
+      {/* <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} /> */}
+    </Routes>
   );
 }
 

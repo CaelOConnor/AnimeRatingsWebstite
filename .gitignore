@@ -27,13 +27,17 @@ redis-data/
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
 
 # Editor / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.swn
 
 # Jenkins (if running locally)
 .jenkins/
@@ -51,3 +55,18 @@ coverage/
 *.seed
 *.pid.lock
 pids/
+
+# JWT / auth secrets (extra safety net — these should never be committed)
+*.pem
+*.key
+*.cert
+*.p12
+
+# Vite cache
+.vite/
+
+# TypeScript (if you add it later)
+*.tsbuildinfo
+
+# Optional: ESLint cache
+.eslintcache

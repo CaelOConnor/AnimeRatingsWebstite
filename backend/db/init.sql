@@ -9,6 +9,8 @@ CREATE TABLE users (
   password_hash   TEXT         NOT NULL,
   avatar_url      TEXT,
   bio             TEXT,
+  is_banned       BOOLEAN DEFAULT FALSE,
+  role_type       TEXT DEFAULT 'user',
   created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
