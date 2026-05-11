@@ -20,13 +20,14 @@ CREATE INDEX idx_users_username ON users (username);
 -- ── Anime cache ───────────────────────────────────────────────────────────────
 CREATE TABLE anime (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tmdb_id           INTEGER      NOT NULL UNIQUE,
+  tmdb_id           INTEGER      NOT NULL,
+  tmdb_type         VARCHAR(10)  NOT NULL DEFAULT 'tv',
+  season_number     INTEGER      DEFAULT NULL,
   title             VARCHAR(255) NOT NULL,
   original_title    VARCHAR(255),
   overview          TEXT,
   poster_path       TEXT,
   backdrop_path     TEXT,
-  tmdb_rating       NUMERIC(4,2),
   episode_count     INTEGER,
   season_count      INTEGER,
   status            VARCHAR(50),
@@ -35,7 +36,7 @@ CREATE TABLE anime (
   cached_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_anime_tmdb_id   ON anime (tmdb_id);
+CREATE UNIQUE INDEX idx_anime_tmdb_unique ON anime (tmdb_id, tmdb_type, season_number);
 CREATE INDEX idx_anime_cached_at ON anime (cached_at);
 
 -- ── Watchlist ─────────────────────────────────────────────────────────────────
