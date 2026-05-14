@@ -168,3 +168,33 @@ export async function deleteReview(id) {
  
   return result.rows[0] ?? null;
 }
+
+
+/**
+ * Fetch a single review by user and anime UUID pair.
+ * Returns null if either id is invalid, or no matching row exists.
+ *
+ * @param {string} userId - Internal UUID of the user
+ * @param {string} animeId - Internal UUID of the anime
+ * @returns {Promise<object|null>} The review row, or null on miss
+ */
+export async function getReviewByUserAndAnime(userId, animeId) {
+  if (!UUID_REGEX.test(userId) || !UUID_REGEX.test(animeId)) return null;
+ 
+  const result = await query(
+    `SELECT
+       id,
+       anime_id,
+       user_id,
+       rating,
+       body,
+       created_at,
+       updated_at
+     FROM reviews
+     WHERE user_id = $1
+       AND anime_id = $2`,
+    [userId, animeId]
+  );
+ 
+  return result.rows[0] ?? null;
+}

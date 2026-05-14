@@ -85,7 +85,8 @@ CREATE TABLE comments (
   user_id    UUID        NOT NULL REFERENCES users(id)    ON DELETE CASCADE,
   review_id  UUID        NOT NULL REFERENCES reviews(id)  ON DELETE CASCADE,
   body       TEXT        NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_comments_review ON comments (review_id);
@@ -106,4 +107,8 @@ CREATE TRIGGER trg_reviews_updated_at
 
 CREATE TRIGGER trg_watchlist_updated_at
   BEFORE UPDATE ON watchlist
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER set_updated_at_comments
+  BEFORE UPDATE ON comments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
