@@ -1,0 +1,1 @@
+GET /watchlist (current user's), POST /watchlist, PATCH /watchlist/:animeId, DELETE /watchlist/:animeId

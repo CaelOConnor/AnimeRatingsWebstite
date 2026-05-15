@@ -7,3 +7,8 @@ To work in dev run: docker compose up --build
 To run tests cd backend then run: npm test
 
 To take down container run: docker compose down
+
+
+
+
+do this: npm install --save-dev supertest
