@@ -117,7 +117,7 @@ describe('addToWatchlist', () => {
 
     await expect(
       addToWatchlist({ userId: user.id, animeId: anime.id, status: 'watching' })
-    ).rejects.toThrow(/already in watchlist/i);
+    ).rejects.toThrow(/already in your watchlist/i);
   });
 
   it('allows two different users to add the same anime to their watchlists', async () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import supertest from 'supertest';
 import app from '../../app.js';
-import { createTestUser } from '../testHelpers.js';
+import { createTestUser } from './testHelpers.js';
 import { addToWatchlist } from '../../db/watchlist.js';
 import { upsertAnime } from '../../db/anime.js';
 import { query } from '../../db/db.js';
