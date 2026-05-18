@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { query } from './db/db.js';
 import authRoutes from './routes/auth.js';
+import reviewRoutes from './routes/reviews.js';
+import commentRoutes from './routes/comments.js';
+import watchlistRoutes from './routes/watchlist.js';
 
 const app = express();
 
@@ -16,6 +19,9 @@ app.use(express.json());
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.use('/api/auth', authRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from backend!' });

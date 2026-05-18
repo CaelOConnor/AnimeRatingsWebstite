@@ -1,7 +1,3 @@
-GET /reviews?animeId=, POST /reviews, GET /reviews/:id, PATCH /reviews/:id, DELETE /reviews/:id
-
-
-
 import { Router } from 'express';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 import {
@@ -37,6 +33,153 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('[GET /api/reviews]', err);
     res.status(500).json({ error: 'Failed to fetch reviews.' });
+  }
+});
+
+// ── POST /api/reviews ─────────────────────────────────────────────────────────
+// Auth required. Creates a review for the authenticated user.
+// At least one of rating or body must be provided.
+
+router.post('/', authenticateToken, async (req, res) => {
+  const { animeId, rating, body } = req.body;
+
+  if (!animeId) {
+    return res.status(400).json({ error: 'animeId is required.' });
+  }
+  if (!UUID_REGEX.test(animeId)) {
+    return res.status(400).json({ error: 'animeId must be a valid UUID.' });
+  }
+
+  const hasRating = rating !== undefined && rating !== null;
+  const hasBody = body !== undefined && body !== null;
+
+  if (!hasRating && !hasBody) {
+    return res.status(400).json({ error: 'At least one of rating or body is required.' });
+  }
+  if (hasRating) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
+      return res.status(400).json({ error: 'rating must be an integer between 1 and 10.' });
+    }
+  }
+  if (hasBody && body.trim() === '') {
+    return res.status(400).json({ error: 'body cannot be empty.' });
+  }
+
+  try {
+    const review = await createReview({
+      animeId,
+      userId: req.user.id,
+      rating: hasRating ? rating : null,
+      body: hasBody ? body : null,
+    });
+    res.status(201).json(review);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'You have already reviewed this anime.' });
+    }
+    if (err.code === '23503') {
+      return res.status(404).json({ error: 'Anime not found.' });
+    }
+    console.error('[POST /api/reviews]', err);
+    res.status(500).json({ error: 'Failed to create review.' });
+  }
+});
+
+// ── GET /api/reviews/:id ──────────────────────────────────────────────────────
+// Public. Returns a single review by its UUID.
+
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!UUID_REGEX.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
+  }
+
+  try {
+    const review = await getReviewById(id);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+    res.json(review);
+  } catch (err) {
+    console.error('[GET /api/reviews/:id]', err);
+    res.status(500).json({ error: 'Failed to fetch review.' });
+  }
+});
+
+// ── PATCH /api/reviews/:id ────────────────────────────────────────────────────
+// Auth required. Owner only — moderators cannot edit others' reviews.
+
+router.patch('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { rating, body } = req.body;
+
+  if (!UUID_REGEX.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
+  }
+
+  const hasRating = rating !== undefined && rating !== null;
+  const hasBody = body !== undefined && body !== null;
+
+  if (!hasRating && !hasBody) {
+    return res.status(400).json({ error: 'At least one of rating or body is required.' });
+  }
+  if (hasRating) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
+      return res.status(400).json({ error: 'rating must be an integer between 1 and 10.' });
+    }
+  }
+  if (hasBody && body.trim() === '') {
+    return res.status(400).json({ error: 'body cannot be empty.' });
+  }
+
+  try {
+    const review = await getReviewById(id);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    // Only the owner can edit — no moderator exception for PATCH
+    if (review.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+
+    const updated = await updateReview(id, {
+      ...(hasRating && { rating }),
+      ...(hasBody && { body }),
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error('[PATCH /api/reviews/:id]', err);
+    res.status(500).json({ error: 'Failed to update review.' });
+  }
+});
+
+// ── DELETE /api/reviews/:id ───────────────────────────────────────────────────
+// Auth required. Owner or moderator.
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!UUID_REGEX.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
+  }
+
+  try {
+    const review = await getReviewById(id);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found.' });
+    }
+
+    if (review.user_id !== req.user.id && req.user.role === 'user') {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+
+    const deleted = await deleteReview(id);
+    res.json(deleted);
+  } catch (err) {
+    console.error('[DELETE /api/reviews/:id]', err);
+    res.status(500).json({ error: 'Failed to delete review.' });
   }
 });
 
