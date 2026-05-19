@@ -55,10 +55,10 @@ router.post('/', authenticateToken, async (req, res) => {
     });
     res.status(201).json(entry);
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === '23505' || err.message === 'This anime is already in your watchlist.') {
       return res.status(409).json({ error: 'This anime is already in your watchlist.' });
     }
-    if (err.code === '23503') {
+    if (err.code === '23503' || err.message === 'Anime not found.') {
       return res.status(404).json({ error: 'Anime not found.' });
     }
     console.error('[POST /api/watchlist]', err);

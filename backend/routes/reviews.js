@@ -74,7 +74,7 @@ router.post('/', authenticateToken, async (req, res) => {
     });
     res.status(201).json(review);
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === '23505' || err.message === 'You have already reviewed this anime.') {
       return res.status(409).json({ error: 'You have already reviewed this anime.' });
     }
     if (err.code === '23503') {

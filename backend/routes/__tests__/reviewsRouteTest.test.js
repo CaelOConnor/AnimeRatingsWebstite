@@ -61,10 +61,10 @@ afterEach(async () => {
   await query(`
     DELETE FROM reviews
     WHERE anime_id IN (
-      SELECT id FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999
+      SELECT id FROM anime WHERE tmdb_id = 99990
     )
   `);
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99991 AND 99999`);
+  await query(`DELETE FROM anime WHERE tmdb_id = 99991`); // secondary anime only
 });
 
 // afterAll cleanup is intentionally left to the testHelpers pattern:

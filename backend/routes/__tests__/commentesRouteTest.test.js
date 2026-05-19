@@ -52,7 +52,7 @@ beforeAll(async () => {
     createTestUser(),
   ]);
 
-  anime = await makeAnime(99990);
+  anime = await makeAnime(99994);
   review = await createReview({ animeId: anime.id, userId: user.id, rating: 8, body: 'Good.' });
 });
 
@@ -61,10 +61,7 @@ beforeAll(async () => {
 // ---------------------------------------------------------------------------
 
 afterEach(async () => {
-  await query(`
-    DELETE FROM comments
-    WHERE review_id = $1
-  `, [review.id]);
+  await query(`DELETE FROM comments WHERE review_id = $1`, [review.id]);
 });
 
 // ---------------------------------------------------------------------------

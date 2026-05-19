@@ -48,8 +48,8 @@ beforeAll(async () => {
   ]);
 
   [animeA, animeB] = await Promise.all([
-    makeAnime(99990),
-    makeAnime(99991),
+    makeAnime(99992),
+    makeAnime(99993),
   ]);
 });
 

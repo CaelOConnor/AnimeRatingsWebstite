@@ -59,7 +59,7 @@ router.post('/', authenticateToken, async (req, res) => {
     });
     res.status(201).json(comment);
   } catch (err) {
-    if (err.code === '23503') {
+    if (err.code === '23503' || err.message === 'Review not found.') {
       return res.status(404).json({ error: 'Review not found.' });
     }
     console.error('[POST /api/comments]', err);

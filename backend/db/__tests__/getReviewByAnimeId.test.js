@@ -4,15 +4,17 @@ import { createReview } from '../reviews.js';
 import { upsertAnime } from '../anime.js';
 import { createUser } from '../users.js';
 import { query } from '../db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 async function makeUser(suffix = '') {
+  const id = uuidv4().slice(0, 8);
   return createUser({
-    username: `rev_byanimeid_user${suffix}`,
-    email: `rev_byanimeid_user${suffix}@example.com`,
+    username: `rev_byanimeid_user${suffix}_${id}`,
+    email: `rev_byanimeid_user${suffix}_${id}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }
@@ -40,14 +42,8 @@ async function makeAnime(tmdbId = 99990) {
 // ---------------------------------------------------------------------------
 
 afterEach(async () => {
-  await query(`
-    DELETE FROM reviews
-    WHERE anime_id IN (
-      SELECT id FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999
-    )
-  `);
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
   await query(`DELETE FROM users WHERE email LIKE 'rev_byanimeid_user%@example.com'`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
 });
 
 // ---------------------------------------------------------------------------
