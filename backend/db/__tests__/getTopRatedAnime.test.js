@@ -48,11 +48,11 @@ async function createTestUser(suffix = '') {
   return result.rows[0].id;
 }
 
+
+// MAKE THIS STANDARD WITH OTHER TEST FILES
 async function cleanup() {
-  // Delete in FK-safe order: reviews first, then anime, then users
-  await query(`DELETE FROM reviews WHERE body = 'Test review body'`);
+  await query(`DELETE FROM users WHERE username LIKE 'testuser%'`);
   await query('DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999');
-  await query("DELETE FROM users WHERE username LIKE 'testuser%'");
 }
 
 // ---------------------------------------------------------------------------

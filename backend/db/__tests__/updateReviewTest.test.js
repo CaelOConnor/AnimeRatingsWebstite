@@ -43,14 +43,8 @@ async function makeReview(animeId, userId, rating = 7, body = 'Original body.') 
 // ---------------------------------------------------------------------------
 
 afterEach(async () => {
-  await query(`
-    DELETE FROM reviews
-    WHERE anime_id IN (
-      SELECT id FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999
-    )
-  `);
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
   await query(`DELETE FROM users WHERE email LIKE 'rev_update_user%@example.com'`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
 });
 
 // ---------------------------------------------------------------------------

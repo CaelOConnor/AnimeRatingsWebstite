@@ -17,7 +17,10 @@ async function createTestAnime(overrides = {}) {
   });
 }
 
+
+// MAKE THIS STANDARD WITH OTHER TEST FILES
 async function cleanup() {
+  await query(`DELETE FROM users WHERE email LIKE 'cached_anime_user%@example.com'`);
   await query('DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999');
 }
 
