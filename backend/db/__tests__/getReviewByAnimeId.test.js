@@ -10,11 +10,14 @@ import { v4 as uuidv4 } from 'uuid';
 // Helpers
 // ---------------------------------------------------------------------------
 
+let _seq = 0;
+const _prefix = 'rv_ani'; 
+
 async function makeUser(suffix = '') {
-  const id = uuidv4().slice(0, 8);
+  const uid = `${Date.now() % 1000000}_${++_seq}`;
   return createUser({
-    username: `rev_byanimeid_user${suffix}_${id}`,
-    email: `rev_byanimeid_user${suffix}_${id}@example.com`,
+    username: `${_prefix}_${uid}${suffix}`,
+    email:    `${_prefix}_${uid}${suffix}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }
@@ -42,7 +45,8 @@ async function makeAnime(tmdbId = 99990) {
 // ---------------------------------------------------------------------------
 
 afterEach(async () => {
-  await query(`DELETE FROM users WHERE email LIKE 'rev_byanimeid_user%@example.com'`);
+  await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+
   await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
 });
 

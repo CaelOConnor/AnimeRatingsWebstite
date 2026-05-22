@@ -8,10 +8,12 @@ import { query } from '../db.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
+let _userSeq = 0;
 async function makeUser(suffix = '') {
+  const uid = `${Date.now() % 1000000}_${++_seq}`;
   return createUser({
-    username: `review_test_user${suffix}`,
-    email: `review_test_user${suffix}@example.com`,
+    username: `review_test_user_${id}${suffix}`,
+    email: `review_test_user_${id}${suffix}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }

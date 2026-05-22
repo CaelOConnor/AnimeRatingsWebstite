@@ -8,10 +8,14 @@ import { query } from '../db.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
+let _seq = 0;
+const _prefix = 'rv_upd'; 
+
 async function makeUser(suffix = '') {
+  const uid = `${Date.now() % 1000000}_${++_seq}`;
   return createUser({
-    username: `rev_update_user${suffix}`,
-    email: `rev_update_user${suffix}@example.com`,
+    username: `${_prefix}_${uid}${suffix}`,
+    email:    `${_prefix}_${uid}${suffix}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }
@@ -43,7 +47,8 @@ async function makeReview(animeId, userId, rating = 7, body = 'Original body.') 
 // ---------------------------------------------------------------------------
 
 afterEach(async () => {
-  await query(`DELETE FROM users WHERE email LIKE 'rev_update_user%@example.com'`);
+  await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+
   await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
 });
 

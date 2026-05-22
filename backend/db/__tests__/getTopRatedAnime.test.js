@@ -43,15 +43,13 @@ async function createTestUser(suffix = '') {
     `INSERT INTO users (id, username, email, password_hash)
      VALUES (uuid_generate_v4(), $1, $2, 'hash')
      RETURNING id`,
-    [`testuser${suffix}`, `testuser${suffix}@example.com`]
+    [`toprated_testuser${suffix}`, `toprated_testuser${suffix}@example.com`]
   );
   return result.rows[0].id;
 }
 
-
-// MAKE THIS STANDARD WITH OTHER TEST FILES
 async function cleanup() {
-  await query(`DELETE FROM users WHERE username LIKE 'testuser%'`);
+  await query(`DELETE FROM users WHERE username LIKE 'toprated_testuser%'`);
   await query('DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999');
 }
 
@@ -82,9 +80,13 @@ describe('getTopRatedAnime', () => {
 
       const results = await getTopRatedAnime(10);
 
-      const titles = results.map((r) => r.title);
-      expect(titles.indexOf('High Rated')).toBeLessThan(titles.indexOf('Mid Rated'));
-      expect(titles.indexOf('Mid Rated')).toBeLessThan(titles.indexOf('Low Rated'));
+      const idsInOrder = [high.id, mid.id, low.id];
+      const filtered = results.filter((r) => idsInOrder.includes(r.id));
+
+      expect(filtered).toHaveLength(3);
+      expect(filtered[0].id).toBe(high.id);
+      expect(filtered[1].id).toBe(mid.id);
+      expect(filtered[2].id).toBe(low.id);
     });
 
     it('returns the correct average_rating value', async () => {
