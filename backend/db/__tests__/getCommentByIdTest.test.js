@@ -5,19 +5,19 @@ import { upsertAnime } from '../anime.js';
 import { createUser } from '../users.js';
 import { query } from '../db.js';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+let _seq = 0;
+const _prefix = 'cm_byid';
 
 async function makeUser(suffix = '') {
+  const uid = `${Date.now() % 1000000}_${++_seq}`;
   return createUser({
-    username: `com_byid_user${suffix}`,
-    email: `com_byid_user${suffix}@example.com`,
+    username:     `${_prefix}_${uid}${suffix}`,
+    email:        `${_prefix}_${uid}${suffix}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }
 
-async function makeAnime(tmdbId = 99990) {
+async function makeAnime(tmdbId = 10170) {
   return upsertAnime({
     tmdbId,
     tmdbType: 'tv',
@@ -39,32 +39,10 @@ async function makeReview(animeId, userId) {
   return createReview({ animeId, userId, rating: 7, body: 'A review.' });
 }
 
-// ---------------------------------------------------------------------------
-// Cleanup
-// ---------------------------------------------------------------------------
-
 afterEach(async () => {
-  await query(`
-    DELETE FROM comments
-    WHERE review_id IN (
-      SELECT r.id FROM reviews r
-      JOIN anime a ON r.anime_id = a.id
-      WHERE a.tmdb_id BETWEEN 99990 AND 99999
-    )
-  `);
-  await query(`
-    DELETE FROM reviews
-    WHERE anime_id IN (
-      SELECT id FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999
-    )
-  `);
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
-  await query(`DELETE FROM users WHERE email LIKE 'com_byid_user%@example.com'`);
+  await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10170 AND 10179`);
 });
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('getCommentById', () => {
   it('returns the correct comment by id', async () => {
@@ -100,16 +78,12 @@ describe('getCommentById', () => {
   });
 
   it('returns null for a valid UUID that does not exist', async () => {
-    const nonExistentId = '00000000-0000-4000-8000-000000000000';
-
-    const comment = await getCommentById(nonExistentId);
-
+    const comment = await getCommentById('00000000-0000-4000-8000-000000000000');
     expect(comment).toBeNull();
   });
 
   it('returns null for an invalid UUID', async () => {
     const comment = await getCommentById('not-a-uuid');
-
     expect(comment).toBeNull();
   });
 

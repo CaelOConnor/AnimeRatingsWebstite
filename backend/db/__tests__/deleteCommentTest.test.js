@@ -1,13 +1,9 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { deleteComment, createComment, getCommentById } from '../comments.js';
 import { createReview } from '../reviews.js';
 import { upsertAnime } from '../anime.js';
 import { createUser } from '../users.js';
 import { query } from '../db.js';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 let _seq = 0;
 const _prefix = 'cm_del';
@@ -21,7 +17,7 @@ async function makeUser(suffix = '') {
   });
 }
 
-async function makeAnime(tmdbId = 99990) {
+async function makeAnime(tmdbId = 10130) {
   return upsertAnime({
     tmdbId,
     tmdbType: 'tv',
@@ -43,21 +39,16 @@ async function makeReview(animeId, userId) {
   return createReview({ animeId, userId, rating: 7, body: 'A review.' });
 }
 
-// ---------------------------------------------------------------------------
-// Cleanup
-// ---------------------------------------------------------------------------
-
-afterEach(async () => {
-  await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
-
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
-});
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe('deleteComment', () => {
+  beforeEach(async () => {
+    await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10130 AND 10139`);
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+    await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10130 AND 10139`);
+  });
+
   it('deletes the comment so it can no longer be fetched', async () => {
     const user = await makeUser();
     const anime = await makeAnime();
@@ -103,8 +94,8 @@ describe('deleteComment', () => {
   it('only deletes the targeted comment, not comments on other reviews', async () => {
     const userA = await makeUser('_a');
     const userB = await makeUser('_b');
-    const animeA = await makeAnime(99990);
-    const animeB = await makeAnime(99991);
+    const animeA = await makeAnime(10131);
+    const animeB = await makeAnime(10132);
     const reviewA = await makeReview(animeA.id, userA.id);
     const reviewB = await makeReview(animeB.id, userB.id);
     const commentA = await createComment({ reviewId: reviewA.id, userId: userA.id, body: 'On review A.' });
@@ -118,16 +109,12 @@ describe('deleteComment', () => {
   });
 
   it('returns null for a valid UUID that does not exist', async () => {
-    const nonExistentId = '00000000-0000-4000-8000-000000000000';
-
-    const deleted = await deleteComment(nonExistentId);
-
+    const deleted = await deleteComment('00000000-0000-4000-8000-000000000000');
     expect(deleted).toBeNull();
   });
 
   it('returns null for an invalid UUID', async () => {
     const deleted = await deleteComment('not-a-uuid');
-
     expect(deleted).toBeNull();
   });
 

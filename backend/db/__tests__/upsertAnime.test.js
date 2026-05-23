@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { query } from '../db.js';
 import { upsertAnime } from '../anime.js';
 
@@ -39,14 +39,12 @@ async function cleanupByTmdbId(tmdbId) {
 // ---------------------------------------------------------------------------
 
 describe('upsertAnime', () => {
-  afterEach(async () => {
-    // Clean up any rows created during each test.
-    // Using distinct tmdbIds per test group keeps cleanup simple.
-    await cleanupByTmdbId(1399); // whole-series / main test ID
-    await cleanupByTmdbId(1400); // movie test ID
-    await cleanupByTmdbId(1401); // season-specific test ID
-    await cleanupByTmdbId(9999); // validation / edge-case ID
-  });
+  beforeEach(async () => {
+  await cleanupByTmdbId(1399);
+  await cleanupByTmdbId(1400);
+  await cleanupByTmdbId(1401);
+  await cleanupByTmdbId(9999);
+});
 
   // -------------------------------------------------------------------------
   // Basic insert

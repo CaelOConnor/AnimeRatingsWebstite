@@ -22,7 +22,7 @@ async function makeUser(suffix = '') {
   });
 }
 
-async function makeAnime(tmdbId = 99990) {
+async function makeAnime(tmdbId = 10200) {
   return upsertAnime({
     tmdbId,
     tmdbType: 'tv',
@@ -47,7 +47,7 @@ async function makeAnime(tmdbId = 99990) {
 afterEach(async () => {
   await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
 
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10200 AND 10209`);
 });
 
 // ---------------------------------------------------------------------------

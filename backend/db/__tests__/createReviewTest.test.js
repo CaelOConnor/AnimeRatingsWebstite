@@ -8,17 +8,19 @@ import { query } from '../db.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
-let _userSeq = 0;
+let _seq = 0;
+const _prefix = 'rv_cr';
+
 async function makeUser(suffix = '') {
   const uid = `${Date.now() % 1000000}_${++_seq}`;
   return createUser({
-    username: `review_test_user_${id}${suffix}`,
-    email: `review_test_user_${id}${suffix}@example.com`,
+    username:     `${_prefix}_${uid}${suffix}`,
+    email:        `${_prefix}_${uid}${suffix}@example.com`,
     passwordHash: 'hashed_pw',
   });
 }
 
-async function makeAnime(tmdbId = 99990) {
+async function makeAnime(tmdbId = 10120) {
   return upsertAnime({
     tmdbId,
     tmdbType: 'tv',
@@ -36,13 +38,9 @@ async function makeAnime(tmdbId = 99990) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Cleanup
-// ---------------------------------------------------------------------------
-
 afterEach(async () => {
-  await query(`DELETE FROM users WHERE email LIKE 'review_test_user%@example.com'`);
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
+  await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10120 AND 10129`);
 });
 
 // ---------------------------------------------------------------------------

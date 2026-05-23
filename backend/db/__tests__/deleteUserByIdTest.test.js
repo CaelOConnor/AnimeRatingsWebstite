@@ -12,12 +12,6 @@ const BASE_USER = {
   passwordHash: '$2b$10$fakehashfortest',
 };
 
-afterEach(async () => {
-  // Safety net — if a test fails before the delete happens this prevents
-  // the row from bleeding into the next test
-  await query(`DELETE FROM users WHERE email = $1`, [BASE_USER.email]);
-});
-
 async function createBaseUser() {
   return createUser(BASE_USER);
 }
@@ -31,7 +25,7 @@ async function createTestAnime() {
     `INSERT INTO anime (tmdb_id, title, genres)
      VALUES ($1, $2, $3)
      RETURNING id`,
-    [99999, 'Test Anime', '{}']
+    [10150, 'Test Anime', '{}']
   );
   return result.rows[0];
 }
@@ -39,7 +33,7 @@ async function createTestAnime() {
 // Also add this to your afterEach so it gets cleaned up
 afterEach(async () => {
   await query(`DELETE FROM users WHERE email = $1`, [BASE_USER.email]);
-  await query(`DELETE FROM anime WHERE tmdb_id = $1`, [99999]); // cascades to reviews/watchlist
+  await query(`DELETE FROM anime WHERE tmdb_id = $1`, [10150]);
 });
 
 // ---------------------------------------------------------------------------

@@ -6,13 +6,11 @@ import { getTopRatedAnime, upsertAnime } from '../anime.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Inserts a minimal anime row and returns it.
- * Uses distinct tmdbIds so rows don't conflict with each other.
- */
+let _seq = 0;
+
 async function createTestAnime(overrides = {}) {
   return await upsertAnime({
-    tmdbId: 99999,
+    tmdbId: 10240,
     tmdbType: 'tv',
     seasonNumber: null,
     title: 'Test Anime',
@@ -21,11 +19,6 @@ async function createTestAnime(overrides = {}) {
   });
 }
 
-/**
- * Inserts a review row directly via SQL.
- * We don't have a reviews DB helper yet, so raw SQL is fine here.
- * Requires a real user_id — createTestUser() handles that.
- */
 async function createTestReview({ animeId, userId, rating }) {
   await query(
     `INSERT INTO reviews (id, anime_id, user_id, rating, body)
@@ -34,23 +27,20 @@ async function createTestReview({ animeId, userId, rating }) {
   );
 }
 
-/**
- * Inserts a minimal user row and returns its id.
- * reviews.user_id has a FK constraint so we need a real user.
- */
 async function createTestUser(suffix = '') {
+  const uid = `${Date.now() % 1000000}_${++_seq}`;
   const result = await query(
     `INSERT INTO users (id, username, email, password_hash)
      VALUES (uuid_generate_v4(), $1, $2, 'hash')
      RETURNING id`,
-    [`toprated_testuser${suffix}`, `toprated_testuser${suffix}@example.com`]
+    [`toprated_${uid}${suffix}`, `toprated_${uid}${suffix}@example.com`]
   );
   return result.rows[0].id;
 }
 
 async function cleanup() {
-  await query(`DELETE FROM users WHERE username LIKE 'toprated_testuser%'`);
-  await query('DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999');
+  await query(`DELETE FROM users WHERE username LIKE 'toprated_%'`);
+  await query('DELETE FROM anime WHERE tmdb_id BETWEEN 10240 AND 10259');
 }
 
 // ---------------------------------------------------------------------------

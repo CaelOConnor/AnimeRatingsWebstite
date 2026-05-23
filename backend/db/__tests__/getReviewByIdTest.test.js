@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import { getReviewById, createReview } from '../reviews.js';
 import { upsertAnime } from '../anime.js';
 import { createUser } from '../users.js';
@@ -20,7 +20,7 @@ async function makeUser(suffix = '') {
   });
 }
 
-async function makeAnime(tmdbId = 99990) {
+async function makeAnime(tmdbId = 10210) {
   return upsertAnime({
     tmdbId,
     tmdbType: 'tv',
@@ -44,8 +44,7 @@ async function makeAnime(tmdbId = 99990) {
 
 afterEach(async () => {
   await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
-
-  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999`);
+  await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10210 AND 10219`);
 });
 
 // ---------------------------------------------------------------------------
@@ -53,6 +52,15 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe('getReviewById', () => {
+  beforeEach(async () => {
+    await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10210 AND 10219`);
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM users WHERE email LIKE '${_prefix}_%@example.com'`);
+    await query(`DELETE FROM anime WHERE tmdb_id BETWEEN 10210 AND 10219`);
+  });
+
   it('returns the correct review by id', async () => {
     const user = await makeUser();
     const anime = await makeAnime();
