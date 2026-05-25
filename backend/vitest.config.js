@@ -2,18 +2,19 @@ import { defineConfig } from 'vitest/config';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
-// Load the root .env file (one level up from /backend)
+// Load root .env file
 config({ path: resolve(__dirname, '../.env') });
 
 export default defineConfig({
   test: {
-    // Run tests sequentially — important since they share a real DB
-    // Parallel tests would cause race conditions on inserts/deletes
+    // use processes instead of threads for DB stability
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+
+    // IMPORTANT: disable parallel test files
+    fileParallelism: false,
+
+    // optional but explicit: only 1 worker
+    maxWorkers: 1,
+    minWorkers: 1,
   },
 });
