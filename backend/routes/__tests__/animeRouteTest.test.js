@@ -1,0 +1,300 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import supertest from 'supertest';
+import app from '../../app.js';
+import { createTestUser } from './testHelpers.js';
+import { upsertAnime } from '../../db/anime.js';
+import { query } from '../../db/db.js';
+
+const request = supertest(app);
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const TMDB_ID_BASE = 88100; // dedicated range — no overlap with other test files
+let _seq = 0;
+
+function makeTmdbId() {
+  return TMDB_ID_BASE + ++_seq;
+}
+
+async function makeAnime(overrides = {}) {
+  const tmdbId = overrides.tmdbId ?? makeTmdbId();
+  return upsertAnime({
+    tmdbId,
+    tmdbType: 'tv',
+    seasonNumber: null,
+    title: overrides.title ?? `Anime ${tmdbId}`,
+    originalTitle: null,
+    overview: overrides.overview ?? 'A test anime.',
+    posterPath: overrides.posterPath ?? null,
+    backdropPath: null,
+    episodeCount: overrides.episodeCount ?? null,
+    seasonCount: null,
+    status: overrides.status ?? 'Ended',
+    firstAirDate: overrides.firstAirDate ?? '2021-01-01',
+    genres: overrides.genres ?? [],
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Shared state
+// ---------------------------------------------------------------------------
+
+let user, token;
+let adminUser, adminToken;
+let animeA, animeB, animeC;
+
+beforeAll(async () => {
+  [
+    { user, token },
+    { user: adminUser, token: adminToken },
+  ] = await Promise.all([
+    createTestUser(),
+    createTestUser({ role: 'admin' }),
+  ]);
+
+  [animeA, animeB, animeC] = await Promise.all([
+    makeAnime({ title: 'Attack on Titan' }),
+    makeAnime({ title: 'Attack on Beetles' }),
+    makeAnime({ title: 'Fullmetal Alchemist' }),
+  ]);
+});
+
+afterAll(async () => {
+  await query(
+    `DELETE FROM anime WHERE tmdb_id >= $1 AND tmdb_id < $2`,
+    [TMDB_ID_BASE, TMDB_ID_BASE + 200],
+  );
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/anime/search
+// ---------------------------------------------------------------------------
+
+describe('GET /api/anime/search', () => {
+  it('returns 200 and matching anime for a valid query', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Attack' });
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+
+    const titles = res.body.map((a) => a.title);
+    expect(titles).toContain('Attack on Titan');
+    expect(titles).toContain('Attack on Beetles');
+  });
+
+  it('does not return anime that do not match the query', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Attack' });
+
+    expect(res.status).toBe(200);
+    const titles = res.body.map((a) => a.title);
+    expect(titles).not.toContain('Fullmetal Alchemist');
+  });
+
+  it('returns 200 and an empty array when nothing matches', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'zzznomatchzzz' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('returns the correct fields on each result', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Fullmetal' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
+
+    const anime = res.body[0];
+    expect(anime).toMatchObject({
+      title: 'Fullmetal Alchemist',
+    });
+    expect(anime.id).toBeDefined();
+    expect(anime.tmdb_id).toBeDefined();
+    expect(anime.poster_path !== undefined).toBe(true);
+  });
+
+  it('returns 400 when q param is missing', async () => {
+    const res = await request.get('/api/anime/search');
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when q param is an empty string', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: '' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('is case-insensitive', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'attack on titan' });
+
+    expect(res.status).toBe(200);
+    const titles = res.body.map((a) => a.title);
+    expect(titles).toContain('Attack on Titan');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/anime/browse
+// ---------------------------------------------------------------------------
+
+describe('GET /api/anime/browse', () => {
+  it('returns 200 and an array of anime', async () => {
+    const res = await request.get('/api/anime/browse');
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns the correct fields on each result', async () => {
+    const res = await request.get('/api/anime/browse');
+
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
+
+    const anime = res.body[0];
+    expect(anime.id).toBeDefined();
+    expect(anime.title).toBeDefined();
+    expect(anime.tmdb_id).toBeDefined();
+    expect(anime.poster_path !== undefined).toBe(true);
+  });
+
+  it('accepts a mode=top_rated query param', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'top_rated' });
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('accepts a mode=recent query param', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent' });
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns 400 for an invalid mode value', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'invalid_mode' });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/anime/:id
+// ---------------------------------------------------------------------------
+
+describe('GET /api/anime/:id', () => {
+  it('returns 200 and the correct anime for a valid id', async () => {
+    const res = await request.get(`/api/anime/${animeA.id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: animeA.id,
+      title: 'Attack on Titan',
+    });
+  });
+
+  it('returns the correct fields', async () => {
+    const res = await request.get(`/api/anime/${animeA.id}`);
+
+    expect(res.status).toBe(200);
+    const anime = res.body;
+    expect(anime.id).toBeDefined();
+    expect(anime.tmdb_id).toBeDefined();
+    expect(anime.title).toBeDefined();
+    expect(anime.overview).toBeDefined();
+    expect(anime.status).toBeDefined();
+    expect(anime.poster_path !== undefined).toBe(true);
+    expect(anime.first_air_date !== undefined).toBe(true);
+  });
+
+  it('returns 404 for a non-existent id', async () => {
+    const res = await request.get('/api/anime/9999999');
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 for a non-integer id', async () => {
+    const res = await request.get('/api/anime/not-an-id');
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/anime/fetch/:tmdbId
+// ---------------------------------------------------------------------------
+
+describe('POST /api/anime/fetch/:tmdbId', () => {
+  it('returns 200 and the anime when it is already cached', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${animeA.tmdb_id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: animeA.id,
+      tmdb_id: animeA.tmdb_id,
+      title: 'Attack on Titan',
+    });
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request.post(`/api/anime/fetch/${animeA.tmdb_id}`);
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 when the token is malformed', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${animeA.tmdb_id}`)
+      .set('Authorization', 'Bearer not.a.real.token');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 for a non-integer tmdbId', async () => {
+    const res = await request
+      .post('/api/anime/fetch/not-a-number')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns the correct fields on a cache hit', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${animeB.tmdb_id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const anime = res.body;
+    expect(anime.id).toBeDefined();
+    expect(anime.tmdb_id).toBeDefined();
+    expect(anime.title).toBeDefined();
+    expect(anime.overview !== undefined).toBe(true);
+    expect(anime.poster_path !== undefined).toBe(true);
+  });
+
+  // NOTE: cache-miss (TMDB live fetch) tests belong in integration tests
+  // once the TMDB client is wired up. Skipping here to avoid real HTTP calls.
+});
