@@ -1,28 +1,19 @@
-import { Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import { ProtectedRoute } from './components/ProtectedRoute';
-
-// ── Placeholder pages — replace these as you build them out ──────────────────
-function Home() {
-  return (
-    <div>
-      <h1>Welcome to the app</h1>
-    </div>
-  );
-}
+import { Outlet } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/layout/Navbar';
+import LoginModal from './components/layout/LoginModal';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/"          element={<Home />} />
-      <Route path="/login"     element={<Login />} />
-      <Route path="/register"  element={<Register />} />
-
-      {/* Example protected routes — uncomment as you build these pages */}
-      {/* <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} /> */}
-      {/* <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} /> */}
-    </Routes>
+    <AuthProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8">
+          <Outlet />
+        </main>
+        <LoginModal />
+      </div>
+    </AuthProvider>
   );
 }
 
