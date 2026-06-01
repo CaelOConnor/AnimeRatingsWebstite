@@ -1,0 +1,63 @@
+/* ============================================================
+   ShowRater Design Tokens
+   Change anything here and it updates everywhere in the app.
+   ============================================================ */
+
+:root {
+  /* ── Brand accent ── */
+  --color-accent:          #7C6FCD;   /* blue-purple main */
+  --color-accent-dark:     #5C4FB5;   /* navbar border, deeper hover */
+  --color-accent-hover:    #6A5DC0;   /* button hover */
+  --color-accent-light:    #EDE9FF;   /* pale tint for backgrounds */
+  --color-accent-text:     #ffffff;   /* text on top of accent bg */
+
+  /* ── Navbar (inverted) ── */
+  --color-navbar-bg:         #7C6FCD;          /* same as accent */
+  --color-navbar-border:     #5C4FB5;          /* bottom border */
+  --color-navbar-text:       rgba(255,255,255,0.9);
+  --color-navbar-btn-bg:     rgba(255,255,255,0.12);
+  --color-navbar-btn-border: rgba(255,255,255,0.2);
+  --color-navbar-search-bg:  #F5F4FC;          /* off-white with purple tint */
+  --color-navbar-search-border: #E8E6F5;
+  --color-navbar-search-text:   #1A1830;
+  --color-navbar-search-placeholder: #A09DB8;
+
+  /* ── Page background & surfaces ── */
+  --color-bg:              #F7F7FB;   /* page background */
+  --color-surface:         #FFFFFF;   /* cards, modals */
+  --color-surface-hover:   #F0EFF8;
+  --color-border:          #E2E0F0;
+  --color-border-focus:    #7C6FCD;
+
+  /* ── Text ── */
+  --color-text-primary:    #1A1830;
+  --color-text-secondary:  #6B6880;
+  --color-text-tertiary:   #A09DB8;
+  --color-text-on-accent:  #FFFFFF;
+
+  /* ── Semantic ── */
+  --color-danger:          #D94F4F;
+  --color-danger-light:    #FFF0F0;
+  --color-success:         #3DA06E;
+  --color-success-light:   #EDFAF3;
+  --color-warning:         #C98A2A;
+  --color-warning-light:   #FFF8EC;
+
+  /* ── Shape ── */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 1px 3px rgba(100, 90, 160, 0.08);
+  --shadow-md:  0 4px 16px rgba(100, 90, 160, 0.12);
+  --shadow-lg:  0 8px 32px rgba(100, 90, 160, 0.16);
+
+  /* ── Navbar ── */
+  --navbar-height: 56px;
+
+  /* ── Typography ── */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+}
