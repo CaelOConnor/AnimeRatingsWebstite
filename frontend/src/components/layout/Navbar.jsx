@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import LoginModal from './LoginModal';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -70,11 +72,6 @@ function AccountButton({ user }) {
   );
 }
 
-function RightSlot({ user, onOpenLogin }) {
-  if (user) return <AccountButton user={user} />;
-  return <AuthButtons onOpenLogin={onOpenLogin} />;
-}
-
 // ─── Styles (all driven by CSS variables from tokens.css) ─────────────────────
 
 const s = {
@@ -118,7 +115,6 @@ const s = {
     lineHeight: 1,
   },
 
-  // shared button base
   btnBase: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -186,9 +182,10 @@ const s = {
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
-export default function Navbar({ onOpenLogin }) {
+export default function Navbar() {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const isHome    = pathname === '/';
   const isReports = pathname === '/reports';
@@ -198,13 +195,26 @@ export default function Navbar({ onOpenLogin }) {
                  isReports ? <SearchSort placeholder="Search reports…" /> :
                  null;
 
-  return (
-    <header style={s.navbar}>
-      <div style={s.inner}>
-        <div style={s.left}>  {left}   </div>
-        <div style={s.mid}>   {center} </div>
-        <div style={s.right}> <RightSlot user={user} onOpenLogin={onOpenLogin} /> </div>
+  const right = user
+    ? <AccountButton user={user} />
+    : (
+      <div style={s.authGroup}>
+        <button onClick={() => setLoginOpen(true)} style={s.btnGhost}>Log in</button>
+        <Link to="/register" style={s.btnSolid}>Sign up</Link>
       </div>
-    </header>
+    );
+
+  return (
+    <>
+      <header style={s.navbar}>
+        <div style={s.inner}>
+          <div style={s.left}>  {left}   </div>
+          <div style={s.mid}>   {center} </div>
+          <div style={s.right}> {right}  </div>
+        </div>
+      </header>
+
+      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
+    </>
   );
 }
