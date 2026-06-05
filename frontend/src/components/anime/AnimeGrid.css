@@ -1,0 +1,54 @@
+.anime-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (min-width: 480px) { .anime-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 700px) { .anime-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 960px) { .anime-grid { grid-template-columns: repeat(5, 1fr); } }
+
+.anime-grid__empty {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+/* Skeleton */
+.anime-grid__skeleton-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+}
+
+.anime-grid__skeleton-image {
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(90deg, #ede9f7 25%, #f5f4fc 50%, #ede9f7 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+.anime-grid__skeleton-body {
+  padding: 10px 12px 12px;
+}
+
+.anime-grid__skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: #ede9f7;
+  margin-bottom: 8px;
+}
+
+.anime-grid__skeleton-line--short {
+  height: 12px;
+  width: 60%;
+  background: #f0eef9;
+  margin-bottom: 0;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
