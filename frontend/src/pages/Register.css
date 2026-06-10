@@ -1,0 +1,126 @@
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 60% 40%, rgba(124, 111, 205, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse at 20% 80%, rgba(124, 111, 205, 0.07) 0%, transparent 55%),
+    var(--color-bg);
+  padding: 2rem 1rem;
+}
+
+.register-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 420px;
+  border-top: 5px solid var(--color-accent);
+  overflow: hidden;
+}
+
+.register-card__body {
+  padding: 2.5rem 2.25rem 2.25rem;
+}
+
+.register-card__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+/* Error banner */
+.register-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.register-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.register-form__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+  letter-spacing: 0.01em;
+}
+
+.register-form__input {
+  height: 2.6rem;
+  padding: 0 0.85rem;
+  border: 1.5px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.register-form__input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(124, 111, 205, 0.15);
+}
+
+/* Submit button */
+.register-form__submit {
+  height: 2.75rem;
+  margin-top: 0.4rem;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.register-form__submit:hover:not(:disabled) {
+  background: var(--color-accent-dark);
+}
+
+.register-form__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Footer link */
+.register-footer {
+  margin-top: 1.4rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+  text-align: center;
+}
+
+.register-footer a {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import './Register.css';
 
 export default function Register() {
   const { register } = useAuth();
-  const navigate     = useNavigate();
+  const navigate = useNavigate();
 
-  const [form, setForm]     = useState({ username: '', email: '', password: '' });
-  const [error, setError]   = useState('');
+  const [form, setForm]       = useState({ username: '', email: '', password: '' });
+  const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
@@ -20,7 +21,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form);
-      navigate('/');          // redirect to home (or wherever makes sense)
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -29,54 +30,71 @@ export default function Register() {
   }
 
   return (
-    <div className="auth-page">
-      <h1>Create account</h1>
+    <div className="register-page">
+      <div className="register-card">
+        <div className="register-card__body">
+          <h1 className="register-card__title">Create account</h1>
 
-      {error && <p className="auth-error">{error}</p>}
+          {error && <p className="register-error">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="auth-form">
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          name="username"
-          type="text"
-          value={form.username}
-          onChange={handleChange}
-          autoComplete="username"
-          required
-        />
+          <form onSubmit={handleSubmit} className="register-form">
+            <div className="register-form__field">
+              <label className="register-form__label" htmlFor="username">Username</label>
+              <input
+                className="register-form__input"
+                id="username"
+                name="username"
+                type="text"
+                value={form.username}
+                onChange={handleChange}
+                autoComplete="username"
+                required
+              />
+            </div>
 
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-          autoComplete="email"
-          required
-        />
+            <div className="register-form__field">
+              <label className="register-form__label" htmlFor="email">Email</label>
+              <input
+                className="register-form__input"
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                autoComplete="email"
+                required
+              />
+            </div>
 
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
+            <div className="register-form__field">
+              <label className="register-form__label" htmlFor="password">Password</label>
+              <input
+                className="register-form__input"
+                id="password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Creating account…' : 'Register'}
-        </button>
-      </form>
+            <button
+              type="submit"
+              className="register-form__submit"
+              disabled={loading}
+            >
+              {loading ? 'Creating account…' : 'Register'}
+            </button>
+          </form>
 
-      <p>
-        Already have an account? <Link to="/login">Sign in</Link>
-      </p>
+          <p className="register-footer">
+            Already have an account? <Link to="/">Go to home</Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
