@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
+import { api } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 import './AnimeDetail.css';
 
 const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';

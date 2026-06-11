@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
+import { api } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 import './ReviewDetail.css';
 
 function formatDate(iso) {

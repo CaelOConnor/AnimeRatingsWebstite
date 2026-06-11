@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api } from '../lib/api';
 import './UserProfile.css';
 
 const TMDB_POSTER = 'https://image.tmdb.org/t/p/w500';
