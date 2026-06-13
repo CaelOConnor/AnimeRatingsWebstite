@@ -3,6 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './Register.css';
 
+function validate({ email, password }) {
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return 'Please enter a valid email address.';
+  return null;
+}
+
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +25,11 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const validationError = validate(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -79,6 +92,9 @@ export default function Register() {
                 minLength={8}
                 required
               />
+              <span className="register-form__hint">
+                Min 8 chars · one uppercase · one number · one special character
+              </span>
             </div>
 
             <button

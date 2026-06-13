@@ -70,3 +70,6 @@ pids/
 
 # Optional: ESLint cache
 .eslintcache
+
+# db commands
+commands.md
