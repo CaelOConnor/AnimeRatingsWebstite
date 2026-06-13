@@ -6,20 +6,20 @@ import './LoginModal.css';
 export default function LoginModal({ isOpen, onClose }) {
   const { login } = useAuth();
 
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword]     = useState('');
+  const [error, setError]           = useState('');
+  const [loading, setLoading]       = useState(false);
 
-  const emailRef   = useRef(null);
-  const overlayRef = useRef(null);
+  const identifierRef = useRef(null);
+  const overlayRef    = useRef(null);
 
-  // Auto-focus email on open; reset form on close
+  // Auto-focus identifier on open; reset form on close
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => emailRef.current?.focus(), 60);
+      setTimeout(() => identifierRef.current?.focus(), 60);
     } else {
-      setEmail('');
+      setIdentifier('');
       setPassword('');
       setError('');
       setLoading(false);
@@ -51,7 +51,7 @@ export default function LoginModal({ isOpen, onClose }) {
     setError('');
     setLoading(true);
     try {
-      await login({ email, password });
+      await login({ identifier, password });
       onClose();
     } catch (err) {
       setError(err.message || 'Login failed');
@@ -85,16 +85,18 @@ export default function LoginModal({ isOpen, onClose }) {
 
         <form onSubmit={handleSubmit} className="login-modal__form" noValidate>
           <div className="login-modal__field">
-            <label className="login-modal__label" htmlFor="login-email">Email</label>
+            <label className="login-modal__label" htmlFor="login-identifier">
+              Email or username
+            </label>
             <input
-              ref={emailRef}
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              ref={identifierRef}
+              id="login-identifier"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Email or username"
               required
-              autoComplete="email"
+              autoComplete="username"
               className="login-modal__input"
             />
           </div>

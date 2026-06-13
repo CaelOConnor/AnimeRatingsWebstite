@@ -4,7 +4,7 @@ import { getUserById, deleteUserById, banUser } from '../db/users.js';
 import { getReviewById, deleteReview } from '../db/reviews.js';
 import { getCommentById, deleteComment } from '../db/comments.js';
 import { getUsersByRole, getBannedUsers, getRecentReviews } from '../db/admin.js';
-import { invalidateAllUserTokens } from '../services/redis.js';
+import { denylistAllUserTokens } from '../services/redis.js';
 
 const router = Router();
 
@@ -95,7 +95,7 @@ router.post('/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
 
     // Invalidate every active token for this user in Redis immediately.
     // This ensures they cannot continue using existing sessions post-ban.
-    await invalidateAllUserTokens(id);
+    await denylistAllUserTokens(id);
 
     res.json(ADMIN_USER_FIELDS(banned));
   } catch (err) {

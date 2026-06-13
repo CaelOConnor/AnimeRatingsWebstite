@@ -47,10 +47,13 @@ router.get('/browse', async (req, res) => {
   }
 
   try {
-    const results =
-      mode === 'recent'
-        ? await getRecentlyCachedAnime()
-        : await getTopRatedAnime();
+    let results = mode === 'recent'
+      ? await getRecentlyCachedAnime(50)
+      : await getTopRatedAnime(50);
+
+    if (results.length === 0 && mode === 'top_rated') {
+      results = await getRecentlyCachedAnime(50);
+    }
 
     res.json(results);
   } catch (err) {
@@ -62,11 +65,13 @@ router.get('/browse', async (req, res) => {
 // ── GET /api/anime/:id ────────────────────────────────────────────────────────
 // Public. Returns a single anime by its internal DB id.
 
+// Replace the GET /:id handler with this:
 router.get('/:id', async (req, res) => {
-  const id = parseInt(req.params.id, 10);
+  const { id } = req.params;
 
-  if (isNaN(id)) {
-    return res.status(400).json({ error: 'id must be an integer.' });
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
   }
 
   try {

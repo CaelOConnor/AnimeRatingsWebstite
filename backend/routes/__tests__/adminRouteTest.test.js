@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach } from 'vitest';
 import supertest from 'supertest';
 import app from '../../app.js';
 import { createTestUser } from './testHelpers.js';
@@ -410,9 +410,21 @@ describe('GET /api/admin/reviews', () => {
 
 describe('DELETE /api/admin/reviews/:id', () => {
   let review;
+  let reviewUser;
 
   beforeEach(async () => {
-    review = await makeReview(regularUser.id, anime.id);
+    const { user } = await createTestUser();
+    reviewUser = user;
+    review = await makeReview(reviewUser.id, anime.id);
+  });
+
+  afterEach(async () => {
+    if (review?.id) {
+      await query(`DELETE FROM reviews WHERE id = $1`, [review.id]).catch(() => {});
+    }
+    if (reviewUser?.id) {
+      await query(`DELETE FROM users WHERE id = $1`, [reviewUser.id]).catch(() => {});
+    }
   });
 
   it('returns 204 and deletes any review for an admin', async () => {
@@ -469,10 +481,25 @@ describe('DELETE /api/admin/reviews/:id', () => {
 describe('DELETE /api/admin/comments/:id', () => {
   let review;
   let comment;
+  let reviewUser;
 
   beforeEach(async () => {
-    review = await makeReview(regularUser.id, anime.id);
-    comment = await makeComment(regularUser.id, review.id);
+    const { user } = await createTestUser();
+    reviewUser = user;
+    review = await makeReview(reviewUser.id, anime.id);
+    comment = await makeComment(reviewUser.id, review.id);
+  });
+
+  afterEach(async () => {
+    if (comment?.id) {
+      await query(`DELETE FROM comments WHERE id = $1`, [comment.id]).catch(() => {});
+    }
+    if (review?.id) {
+      await query(`DELETE FROM reviews WHERE id = $1`, [review.id]).catch(() => {});
+    }
+    if (reviewUser?.id) {
+      await query(`DELETE FROM users WHERE id = $1`, [reviewUser.id]).catch(() => {});
+    }
   });
 
   it('returns 204 and deletes any comment for an admin', async () => {

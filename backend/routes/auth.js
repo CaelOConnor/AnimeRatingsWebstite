@@ -100,30 +100,28 @@ router.post('/register', async (req, res) => {
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body;
 
-  if (!email || !password) {
+  if (!identifier || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
   try {
     const result = await query(
       `SELECT id, username, email, password_hash, avatar_url, bio, is_banned, role_type, created_at
-       FROM users WHERE email = $1`,
-      [email.toLowerCase()]
+       FROM users WHERE email = $1 OR username = $1`,
+      [identifier.toLowerCase()]
     );
 
     const user = result.rows[0];
 
-    // Use the same generic message for both "no user" and "wrong password"
-    // to avoid leaking which emails are registered
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.is_banned) {

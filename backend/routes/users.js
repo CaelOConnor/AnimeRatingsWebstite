@@ -100,7 +100,7 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'id must be a valid UUID.' });
   }
 
-  if (req.user.sub !== id) {
+  if (req.user.id !== id) {
     return res.status(403).json({ error: 'Forbidden.' });
   }
 
@@ -128,7 +128,7 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     const updated = await updateUser(id, updates);
     res.json(PUBLIC_FIELDS(updated));
   } catch (err) {
-    if (err.message === 'Username already taken.') {
+    if (err.message === 'Username is already taken') {
       return res.status(409).json({ error: 'Username already taken.' });
     }
     console.error('[PATCH /api/users/:id]', err);

@@ -5,6 +5,9 @@ import authRoutes from './routes/auth.js';
 import reviewRoutes from './routes/reviews.js';
 import commentRoutes from './routes/comments.js';
 import watchlistRoutes from './routes/watchlist.js';
+import animeRoutes from './routes/anime.js';
+import userRoutes from './routes/users.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 
@@ -22,6 +25,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/watchlist', watchlistRoutes);
+app.use('/api/anime', animeRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from backend!' });

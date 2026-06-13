@@ -107,7 +107,7 @@ export default function Register() {
           </form>
 
           <p className="register-footer">
-            Already have an account? <Link to="/">Go to home</Link>
+            Already have an account? <Link to="/?login=true">Go to home</Link>
           </p>
         </div>
       </div>

@@ -55,11 +55,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   // ── login ────────────────────────────────────────────────────────────────────
-  const login = useCallback(async ({ email, password }) => {
+  const login = useCallback(async ({ identifier, password }) => {
     const res = await fetch(`${API}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');

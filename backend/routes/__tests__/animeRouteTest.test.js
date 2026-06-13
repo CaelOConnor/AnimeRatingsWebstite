@@ -229,7 +229,7 @@ describe('GET /api/anime/:id', () => {
   });
 
   it('returns 404 for a non-existent id', async () => {
-    const res = await request.get('/api/anime/9999999');
+    const res = await request.get('/api/anime/00000000-0000-0000-0000-000000000000');
 
     expect(res.status).toBe(404);
   });

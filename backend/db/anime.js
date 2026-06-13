@@ -283,13 +283,6 @@ export async function getAnimeById(id) {
     throw new Error('id is required');
   }
 
-  // Validate UUID format before hitting the DB — Postgres would throw
-  // a cast error on a malformed UUID, but a clear JS error is friendlier.
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
-    throw new Error(`Invalid UUID: ${id}`);
-  }
 
   // ------------------------------------------------------------------
   // Query
