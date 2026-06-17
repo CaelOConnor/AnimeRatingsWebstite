@@ -12,10 +12,9 @@ import {
 const router = Router();
 
 const VALID_BROWSE_MODES = new Set(['top_rated', 'recent']);
+const TMDB_ANIME_KEYWORD_ID = 210024;
 
 // ── GET /api/anime/search?q= ──────────────────────────────────────────────────
-// Public. Full-text search against cached anime titles.
-
 router.get('/search', async (req, res) => {
   const { q } = req.query;
 
@@ -33,10 +32,6 @@ router.get('/search', async (req, res) => {
 });
 
 // ── GET /api/anime/browse?mode= ───────────────────────────────────────────────
-// Public. Returns a list of anime from the local cache.
-// mode=top_rated (default) — sorted by average review rating DESC
-// mode=recent              — sorted by cached_at DESC
-
 router.get('/browse', async (req, res) => {
   const mode = req.query.mode ?? 'top_rated';
 
@@ -63,9 +58,6 @@ router.get('/browse', async (req, res) => {
 });
 
 // ── GET /api/anime/:id ────────────────────────────────────────────────────────
-// Public. Returns a single anime by its internal DB id.
-
-// Replace the GET /:id handler with this:
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -87,12 +79,6 @@ router.get('/:id', async (req, res) => {
 });
 
 // ── POST /api/anime/fetch/:tmdbId ─────────────────────────────────────────────
-// Auth required. Cache-on-first-fetch: if the anime is already in our DB,
-// return it immediately. Otherwise hit the TMDB API, upsert the result, and
-// return the saved record.
-//
-// tmdbType defaults to 'tv' — pass ?type=movie for films.
-
 router.post('/fetch/:tmdbId', authenticateToken, async (req, res) => {
   const tmdbId = parseInt(req.params.tmdbId, 10);
 
@@ -103,39 +89,102 @@ router.post('/fetch/:tmdbId', authenticateToken, async (req, res) => {
   const tmdbType = req.query.type === 'movie' ? 'movie' : 'tv';
 
   try {
-    // ── Cache hit ──────────────────────────────────────────────────────────
     const cached = await getAnimeByTmdbIdentifiers(tmdbId, tmdbType);
     if (cached) {
       return res.json(cached);
     }
 
-    // ── Cache miss — fetch from TMDB ───────────────────────────────────────
-    // TODO: replace this stub with a real TMDB client call once the
-    // integration is wired up. The client should return a normalised object
-    // matching the shape expected by upsertAnime.
-    const tmdbData = await fetchFromTmdb(tmdbId, tmdbType); // throws if not found
+    const tmdbData = await fetchFromTmdb(tmdbId, tmdbType);
     const anime = await upsertAnime(tmdbData);
     res.status(201).json(anime);
   } catch (err) {
     if (err.message === 'TMDB_NOT_FOUND') {
       return res.status(404).json({ error: 'Anime not found on TMDB.' });
     }
+    if (err.message === 'NOT_ANIME') {
+      return res.status(422).json({ error: 'Title is not tagged as anime on TMDB.' });
+    }
+    if (err.message === 'ADULT_CONTENT') {
+      return res.status(422).json({ error: 'Title is flagged as adult content.' });
+    }
     console.error('[POST /api/anime/fetch/:tmdbId]', err);
     res.status(500).json({ error: 'Failed to fetch anime from TMDB.' });
   }
 });
 
-// ---------------------------------------------------------------------------
-// TMDB fetch stub
-// ---------------------------------------------------------------------------
-// Replace this with your real TMDB client module once it exists.
-// Expected return shape mirrors the upsertAnime parameter object.
+// ── TMDB client ───────────────────────────────────────────────────────────────
+
+async function tmdbFetch(url, apiKey) {
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      Accept: 'application/json',
+    },
+  });
+  if (res.status === 404) throw new Error('TMDB_NOT_FOUND');
+  if (!res.ok) throw new Error(`TMDB API error: ${res.status}`);
+  return res.json();
+}
 
 async function fetchFromTmdb(tmdbId, tmdbType) {
-  // TODO: import and call your TMDB client here, e.g.:
-  //   import { fetchTmdbAnime } from '../services/tmdb.js';
-  //   return fetchTmdbAnime(tmdbId, tmdbType);
-  throw new Error('TMDB client not yet implemented.');
+  const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
+  const apiKey = process.env.TMDB_API_KEY;
+
+  if (!apiKey) throw new Error('TMDB_API_KEY is not set');
+
+  const typeSegment = tmdbType === 'movie' ? 'movie' : 'tv';
+
+  // Fetch details and keywords in parallel
+  const [data, keywordData] = await Promise.all([
+    tmdbFetch(`${TMDB_BASE_URL}/${typeSegment}/${tmdbId}?language=en-US`, apiKey),
+    tmdbFetch(`${TMDB_BASE_URL}/${typeSegment}/${tmdbId}/keywords`, apiKey),
+  ]);
+
+  // Block adult content
+  if (data.adult === true) {
+    throw new Error('ADULT_CONTENT');
+  }
+
+  // Check for anime keyword — movies use `keywords`, TV uses `results`
+  const keywords = keywordData.keywords ?? keywordData.results ?? [];
+  const isAnime = keywords.some(k => k.id === TMDB_ANIME_KEYWORD_ID);
+  if (!isAnime) {
+    throw new Error('NOT_ANIME');
+  }
+
+  if (tmdbType === 'movie') {
+    return {
+      tmdbId:        data.id,
+      tmdbType:      'movie',
+      seasonNumber:  null,
+      title:         data.title,
+      originalTitle: data.original_title ?? null,
+      overview:      data.overview ?? null,
+      posterPath:    data.poster_path ?? null,
+      backdropPath:  data.backdrop_path ?? null,
+      episodeCount:  null,
+      seasonCount:   null,
+      status:        data.status ?? null,
+      firstAirDate:  data.release_date ?? null,
+      genres:        (data.genres ?? []).map(g => g.name),
+    };
+  }
+
+  return {
+    tmdbId:        data.id,
+    tmdbType:      'tv',
+    seasonNumber:  null,
+    title:         data.name,
+    originalTitle: data.original_name ?? null,
+    overview:      data.overview ?? null,
+    posterPath:    data.poster_path ?? null,
+    backdropPath:  data.backdrop_path ?? null,
+    episodeCount:  data.number_of_episodes ?? null,
+    seasonCount:   data.number_of_seasons ?? null,
+    status:        data.status ?? null,
+    firstAirDate:  data.first_air_date ?? null,
+    genres:        (data.genres ?? []).map(g => g.name),
+  };
 }
 
 export default router;

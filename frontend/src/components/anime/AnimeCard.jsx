@@ -5,7 +5,8 @@ import './AnimeCard.css';
 // { id, title, cover_image_url, average_rating, genres: ['Action', 'Drama', ...] }
 
 export default function AnimeCard({ anime }) {
-  const { id, title, cover_image_url, average_rating, genres = [] } = anime;
+  const { id, title, poster_path, average_rating, genres = [] } = anime;
+  const cover_image_url = poster_path ? `https://image.tmdb.org/t/p/w500${poster_path}` : null;
 
   const stars = Math.round(average_rating ?? 0);
   const displayGenres = genres.slice(0, 2);
