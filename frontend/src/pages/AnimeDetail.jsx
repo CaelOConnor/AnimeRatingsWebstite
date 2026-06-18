@@ -37,7 +37,14 @@ export default function AnimeDetail() {
   // action bar state
   const [watchStatus, setWatchStatus]       = useState('');
   const [watchSaving, setWatchSaving]       = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showReviewForm, setShowReviewForm]   = useState(false);
+  const [showRatingForm, setShowRatingForm]   = useState(false);
+  const [userReview, setUserReview]           = useState(null);
+
+  // quick rating form
+  const [quickRating, setQuickRating]             = useState('');
+  const [quickRatingError, setQuickRatingError]   = useState(null);
+  const [quickRatingSaving, setQuickRatingSaving] = useState(false);
 
   // review form state
   const [reviewRating, setReviewRating] = useState('');
@@ -56,6 +63,11 @@ export default function AnimeDetail() {
         ]);
         setAnime(animeData);
         setReviews(reviewData);
+        if (user) {
+          const existing = reviewData.find(r => r.user_id === user.id) ?? null;
+          setUserReview(existing);
+          if (existing?.rating != null) setQuickRating(String(existing.rating));
+        }
       } catch (err) {
         setError('Failed to load anime.');
       } finally {
@@ -79,6 +91,32 @@ export default function AnimeDetail() {
     }
   }
 
+  async function handleQuickRatingSubmit() {
+    setQuickRatingError(null);
+    const r = Number(quickRating);
+    if (!quickRating || isNaN(r) || r < 1 || r > 10) {
+      setQuickRatingError('Rating must be between 1 and 10.');
+      return;
+    }
+    setQuickRatingSaving(true);
+    try {
+      if (userReview) {
+        const updated = await api.patch(`/api/reviews/${userReview.id}`, { rating: r });
+        setUserReview(updated);
+        setReviews(prev => prev.map(rv => rv.id === updated.id ? { ...rv, rating: updated.rating } : rv));
+      } else {
+        const newReview = await api.post('/api/reviews', { animeId: id, rating: r });
+        setUserReview(newReview);
+        setReviews(prev => [newReview, ...prev]);
+      }
+      setShowRatingForm(false);
+    } catch (err) {
+      setQuickRatingError(err.message || 'Failed to save rating.');
+    } finally {
+      setQuickRatingSaving(false);
+    }
+  }
+
   async function handleReviewSubmit() {
     setReviewError(null);
     if (!reviewRating || reviewRating < 1 || reviewRating > 10) {
@@ -87,14 +125,26 @@ export default function AnimeDetail() {
     }
     setReviewSaving(true);
     try {
-      const newReview = await api.post('/api/reviews', {
-        animeId: id,
-        rating: Number(reviewRating),
-        title: reviewTitle || null,
-        body: reviewBody || null,
-        containsSpoilers: spoilers,
-      });
-      setReviews(prev => [newReview, ...prev]);
+      let savedReview;
+      if (userReview) {
+        savedReview = await api.patch(`/api/reviews/${userReview.id}`, {
+          rating: Number(reviewRating),
+          title: reviewTitle || null,
+          body: reviewBody || null,
+          containsSpoilers: spoilers,
+        });
+        setReviews(prev => prev.map(rv => rv.id === savedReview.id ? savedReview : rv));
+      } else {
+        savedReview = await api.post('/api/reviews', {
+          animeId: id,
+          rating: Number(reviewRating),
+          title: reviewTitle || null,
+          body: reviewBody || null,
+          containsSpoilers: spoilers,
+        });
+        setReviews(prev => [savedReview, ...prev]);
+      }
+      setUserReview(savedReview);
       setShowReviewForm(false);
       setReviewRating('');
       setReviewTitle('');
@@ -202,9 +252,16 @@ export default function AnimeDetail() {
         <div className="anime-detail__actions">
           <button
             className="anime-detail__action-btn anime-detail__action-btn--primary"
-            onClick={() => setShowReviewForm(v => !v)}
+            onClick={() => { setShowReviewForm(v => !v); setShowRatingForm(false); }}
           >
             {showReviewForm ? 'Cancel' : '✏️ Write a Review'}
+          </button>
+
+          <button
+            className="anime-detail__action-btn anime-detail__action-btn--secondary"
+            onClick={() => { setShowRatingForm(v => !v); setShowReviewForm(false); }}
+          >
+            {showRatingForm ? 'Cancel' : `⭐ ${userReview?.rating != null ? `Rated ${userReview.rating}` : 'Rate'}`}
           </button>
 
           <select
@@ -218,6 +275,31 @@ export default function AnimeDetail() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+        </div>
+        )}
+        {isLoggedIn && showRatingForm && (
+        <div className="anime-detail__rating-panel">
+          <label className="anime-detail__rating-panel-label">
+            Your Rating (1–10)
+            <input
+              className="anime-detail__form-input anime-detail__form-input--rating"
+              type="number"
+              min="1"
+              max="10"
+              step="0.25"
+              value={quickRating}
+              onChange={e => setQuickRating(e.target.value)}
+              placeholder="8.75"
+            />
+          </label>
+          {quickRatingError && <p className="anime-detail__form-error">{quickRatingError}</p>}
+          <button
+            className="anime-detail__action-btn anime-detail__action-btn--primary"
+            onClick={handleQuickRatingSubmit}
+            disabled={quickRatingSaving}
+          >
+            {quickRatingSaving ? 'Saving…' : 'Save Rating'}
+          </button>
         </div>
       )}
 

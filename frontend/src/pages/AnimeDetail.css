@@ -102,7 +102,7 @@
 
 .anime-detail__original-title {
   font-size: 0.95rem;
-  color: var(--color-text-muted, #888);
+  color: var(--color-text, #1a1a2e);
   margin: 0 0 0.75rem;
 }
 
@@ -146,7 +146,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted, #999);
+  color: var(--color-text, #1a1a2e);
   margin-bottom: 0.1rem;
 }
 
@@ -214,7 +214,7 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: background 0.15s, opacity 0.15s;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
 }
 
 .anime-detail__action-btn--primary {
@@ -224,6 +224,17 @@
 
 .anime-detail__action-btn--primary:hover {
   background: var(--color-accent-dark);
+}
+
+.anime-detail__action-btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  border: 2px solid var(--color-accent);
+}
+
+.anime-detail__action-btn--secondary:hover {
+  background: var(--color-accent);
+  color: #fff;
 }
 
 .anime-detail__action-btn:disabled {
@@ -246,6 +257,35 @@
 .anime-detail__watchlist-select:hover {
   background: var(--color-accent);
   color: #fff;
+}
+
+/* ── Quick rating panel ── */
+
+.anime-detail__rating-panel {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border, #e5e5ef);
+  box-shadow: 0 2px 12px rgba(124, 111, 205, 0.07);
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.anime-detail__rating-panel-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #888);
+  gap: 0.35rem;
 }
 
 /* ── Review form ── */
@@ -542,5 +582,10 @@
 
   .anime-detail__form-input--rating {
     width: 100%;
+  }
+
+  .anime-detail__rating-panel {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

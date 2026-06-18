@@ -57,8 +57,9 @@ router.post('/', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'At least one of rating or body is required.' });
   }
   if (hasRating) {
-    if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
-      return res.status(400).json({ error: 'rating must be an integer between 1 and 10.' });
+    const r = Number(rating);
+    if (isNaN(r) || r < 1 || r > 10 || Math.round(r * 4) / 4 !== r) {
+      return res.status(400).json({ error: 'rating must be a number between 1 and 10 in increments of 0.25.' });
     }
   }
   if (hasBody && body.trim() === '') {
@@ -125,8 +126,9 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'At least one of rating or body is required.' });
   }
   if (hasRating) {
-    if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
-      return res.status(400).json({ error: 'rating must be an integer between 1 and 10.' });
+    const r = Number(rating);
+    if (isNaN(r) || r < 1 || r > 10 || Math.round(r * 4) / 4 !== r) {
+      return res.status(400).json({ error: 'rating must be a number between 1 and 10 in increments of 0.25.' });
     }
   }
   if (hasBody && body.trim() === '') {

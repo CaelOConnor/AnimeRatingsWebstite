@@ -65,7 +65,7 @@ CREATE TABLE reviews (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id           UUID         NOT NULL REFERENCES users(id)  ON DELETE CASCADE,
   anime_id          UUID         NOT NULL REFERENCES anime(id)  ON DELETE CASCADE,
-  rating            SMALLINT     CHECK (rating BETWEEN 1 AND 10),
+  rating            NUMERIC(4,2) CHECK (rating BETWEEN 1 AND 10),
   title             VARCHAR(200),
   body              TEXT,
   contains_spoilers BOOLEAN      NOT NULL DEFAULT FALSE,
