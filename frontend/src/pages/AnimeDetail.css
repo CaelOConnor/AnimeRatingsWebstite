@@ -172,6 +172,22 @@
   color: #d0cfe8;
 }
 
+.anime-detail__star--half {
+  position: relative;
+  display: inline-block;
+  color: #d0cfe8;
+}
+
+.anime-detail__star--half::before {
+  content: '★';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  overflow: hidden;
+  color: #f5a623;
+}
+
 .anime-detail__rating-number {
   font-size: 1.1rem;
   font-weight: 700;
@@ -180,7 +196,7 @@
 
 .anime-detail__rating-count {
   font-size: 0.85rem;
-  color: var(--color-text-muted, #999);
+  color: var(--color-text, #1a1a2e);
 }
 
 /* ── Overview ── */

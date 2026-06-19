@@ -15,12 +15,23 @@ const WATCHLIST_OPTIONS = [
 ];
 
 function StarRating({ value }) {
-  const filled = Math.round(value / 2);
+  const starsOutOf5 = value / 2;
+  const fullStars = Math.floor(starsOutOf5);
+  const hasHalfStar = starsOutOf5 - fullStars >= 0.25 && starsOutOf5 - fullStars < 0.75;
+  const roundsUpToFull = starsOutOf5 - fullStars >= 0.75;
+  const totalFull = roundsUpToFull ? fullStars + 1 : fullStars;
+
   return (
     <span className="anime-detail__stars" aria-label={`${value} out of 10`}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < filled ? 'anime-detail__star--filled' : 'anime-detail__star--empty'}>★</span>
-      ))}
+      {Array.from({ length: 5 }, (_, i) => {
+        if (i < totalFull) {
+          return <span key={i} className="anime-detail__star--filled">★</span>;
+        }
+        if (i === totalFull && hasHalfStar) {
+          return <span key={i} className="anime-detail__star--half">★</span>;
+        }
+        return <span key={i} className="anime-detail__star--empty">★</span>;
+      })}
     </span>
   );
 }
@@ -75,7 +86,7 @@ export default function AnimeDetail() {
       }
     }
     load();
-  }, [id]);
+  }, [id, user]);
 
   async function handleWatchlistChange(e) {
     const status = e.target.value;
@@ -161,8 +172,10 @@ export default function AnimeDetail() {
   if (error)   return <div className="anime-detail__error">{error}</div>;
   if (!anime)  return null;
 
+  const writtenReviews = reviews.filter(r => r.body && r.body.trim() !== '');
+
   const averageRating = reviews.length
-    ? (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length).toFixed(2)
     : null;
 
   const year = anime.first_air_date ? new Date(anime.first_air_date).getFullYear() : null;
@@ -372,16 +385,16 @@ export default function AnimeDetail() {
       <div className="anime-detail__reviews">
         <h2 className="anime-detail__reviews-heading">
           Reviews
-          {reviews.length > 0 && <span className="anime-detail__reviews-count">{reviews.length}</span>}
+          {writtenReviews.length > 0 && <span className="anime-detail__reviews-count">{writtenReviews.length}</span>}
         </h2>
 
-        {reviews.length === 0 ? (
+        {writtenReviews.length === 0 ? (
           <div className="anime-detail__reviews-empty">
             <p>No reviews yet. Be the first to write one!</p>
           </div>
         ) : (
           <div className="anime-detail__reviews-list">
-            {reviews.map(review => (
+            {writtenReviews.map(review => (
               <div key={review.id} className="anime-detail__review-card">
                 <div className="anime-detail__review-header">
                   <Link
