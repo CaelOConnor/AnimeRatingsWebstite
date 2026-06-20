@@ -96,15 +96,17 @@ export async function getReviewById(id) {
  
   const result = await query(
     `SELECT
-       id,
-       anime_id,
-       user_id,
-       rating,
-       body,
-       created_at,
-       updated_at
+       reviews.id,
+       reviews.anime_id,
+       reviews.user_id,
+       reviews.rating,
+       reviews.body,
+       reviews.created_at,
+       reviews.updated_at,
+       users.username
      FROM reviews
-     WHERE id = $1`,
+     JOIN users ON reviews.user_id = users.id
+     WHERE reviews.id = $1`,
     [id]
   );
   return result.rows[0] ?? null;

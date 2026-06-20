@@ -111,7 +111,7 @@ describe('getReviewsByAnimeId', () => {
     expect(review).toMatchObject({
       anime_id: anime.id,
       user_id: user.id,
-      rating: 7,
+      rating: '7.00',
       body: 'Solid.',
     });
     expect(review.id).toBeDefined();

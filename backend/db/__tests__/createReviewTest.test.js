@@ -62,7 +62,7 @@ describe('createReview', () => {
     expect(review).toMatchObject({
       anime_id: anime.id,
       user_id: user.id,
-      rating: 8,
+      rating: '8.00',
       body: 'Really enjoyed this one.',
     });
   });
@@ -112,7 +112,7 @@ describe('createReview', () => {
       body: null,
     });
 
-    expect(review.rating).toBe(9);
+    expect(review.rating).toBe('9.00');
     expect(review.body).toBeNull();
   });
 
@@ -127,7 +127,7 @@ describe('createReview', () => {
       body: 'Painful watch.',
     });
 
-    expect(review.rating).toBe(1);
+    expect(review.rating).toBe('1.00');
   });
 
   it('accepts boundary rating of 10', async () => {
@@ -141,7 +141,7 @@ describe('createReview', () => {
       body: 'Masterpiece.',
     });
 
-    expect(review.rating).toBe(10);
+    expect(review.rating).toBe('10.00');
   });
 
   it('throws a friendly error when the same user reviews the same anime twice', async () => {

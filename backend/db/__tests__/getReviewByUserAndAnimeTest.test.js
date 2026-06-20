@@ -64,7 +64,7 @@ describe('getReviewByUserAndAnime', () => {
       id: created.id,
       user_id: user.id,
       anime_id: anime.id,
-      rating: 8,
+      rating: '8.00',
       body: 'Loved it.',
     });
   });

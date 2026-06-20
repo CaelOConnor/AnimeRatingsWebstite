@@ -64,7 +64,7 @@ describe('updateReview', () => {
 
     const updated = await updateReview(review.id, { rating: 10 });
 
-    expect(updated.rating).toBe(10);
+    expect(updated.rating).toBe('10.00');
     expect(updated.body).toBe('Original body.');
   });
 
@@ -76,7 +76,7 @@ describe('updateReview', () => {
     const updated = await updateReview(review.id, { body: 'Updated body.' });
 
     expect(updated.body).toBe('Updated body.');
-    expect(updated.rating).toBe(7);
+    expect(updated.rating).toBe('7.00');
   });
 
   it('updates both rating and body when both are provided', async () => {
@@ -86,7 +86,7 @@ describe('updateReview', () => {
 
     const updated = await updateReview(review.id, { rating: 9, body: 'Much better on rewatch.' });
 
-    expect(updated.rating).toBe(9);
+    expect(updated.rating).toBe('9.00');
     expect(updated.body).toBe('Much better on rewatch.');
   });
 
@@ -127,7 +127,7 @@ describe('updateReview', () => {
     await updateReview(review.id, { rating: 2, body: 'Changed my mind.' });
 
     const fetched = await getReviewById(review.id);
-    expect(fetched.rating).toBe(2);
+    expect(fetched.rating).toBe('2.00');
     expect(fetched.body).toBe('Changed my mind.');
   });
 

@@ -102,7 +102,7 @@ describe('GET /api/reviews?animeId=', () => {
     expect(review).toMatchObject({
       anime_id: anime.id,
       user_id: user.id,
-      rating: 9,
+      rating: '9.00',
       body: 'Loved it.',
       username: user.username,
     });
@@ -181,7 +181,7 @@ describe('POST /api/reviews', () => {
       expect(res.body).toMatchObject({
         anime_id: anime.id,
         user_id: user.id,
-        rating: 8,
+        rating: '8.00',
         body: 'Really enjoyed this one.',
       });
       expect(res.body.id).toBeDefined();
@@ -192,7 +192,7 @@ describe('POST /api/reviews', () => {
       const res = await postReview({ animeId: anime.id, rating: 7 }, token);
 
       expect(res.status).toBe(201);
-      expect(res.body.rating).toBe(7);
+      expect(res.body.rating).toBe('7.00');
     });
 
     it('accepts a review with only a body (no rating)', async () => {
@@ -207,14 +207,14 @@ describe('POST /api/reviews', () => {
       const res = await postReview({ animeId: anime.id, rating: 1 }, token);
 
       expect(res.status).toBe(201);
-      expect(res.body.rating).toBe(1);
+      expect(res.body.rating).toBe('1.00');
     });
 
     it('accepts rating = 10 (max boundary)', async () => {
       const res = await postReview({ animeId: anime.id, rating: 10 }, token);
 
       expect(res.status).toBe(201);
-      expect(res.body.rating).toBe(10);
+      expect(res.body.rating).toBe('10.00');
     });
 
     it('a moderator can create a review', async () => {
@@ -273,8 +273,8 @@ describe('POST /api/reviews', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 when rating is not an integer', async () => {
-      const res = await postReview({ animeId: anime.id, rating: 7.5 }, token);
+    it('returns 400 when rating is not aligned to a 0.25 increment', async () => {
+      const res = await postReview({ animeId: anime.id, rating: 7.3 }, token);
 
       expect(res.status).toBe(400);
     });
@@ -330,7 +330,7 @@ describe('GET /api/reviews/:id', () => {
       id: review.id,
       anime_id: anime.id,
       user_id: user.id,
-      rating: 8,
+      rating: '8.00',
       body: 'Great show.',
     });
     expect(res.body.created_at).toBeDefined();
@@ -401,7 +401,7 @@ describe('PATCH /api/reviews/:id', () => {
       const res = await patchReview(review.id, { rating: 9 }, token);
 
       expect(res.status).toBe(200);
-      expect(res.body.rating).toBe(9);
+      expect(res.body.rating).toBe('9.00');
       expect(res.body.body).toBe('Okay.');
     });
 
@@ -417,7 +417,7 @@ describe('PATCH /api/reviews/:id', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.body).toBe('Updated body.');
-      expect(res.body.rating).toBe(6);
+      expect(res.body.rating).toBe('6.00');
     });
 
     it('owner can update both rating and body at once', async () => {
@@ -431,7 +431,7 @@ describe('PATCH /api/reviews/:id', () => {
       const res = await patchReview(review.id, { rating: 10, body: 'Changed my mind!' }, token);
 
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ rating: 10, body: 'Changed my mind!' });
+      expect(res.body).toMatchObject({ rating: '10.00', body: 'Changed my mind!' });
     });
 
     it('returns the full updated review in the response', async () => {
@@ -541,7 +541,7 @@ describe('PATCH /api/reviews/:id', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 when rating is not an integer', async () => {
+    it('returns 400 when rating is not aligned to a 0.25 increment', async () => {
       const review = await createReview({
         animeId: anime.id,
         userId: user.id,
@@ -549,7 +549,7 @@ describe('PATCH /api/reviews/:id', () => {
         body: 'Validation.',
       });
 
-      const res = await patchReview(review.id, { rating: 6.5 }, token);
+      const res = await patchReview(review.id, { rating: 6.3 }, token);
 
       expect(res.status).toBe(400);
     });

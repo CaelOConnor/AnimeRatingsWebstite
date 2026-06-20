@@ -217,8 +217,7 @@ export default function ReviewDetail() {
                 to={`/users/${review.user_id}`}
                 className="review-detail__username"
               >
-                {/* username not in getReviewById — show placeholder */}
-                User
+                {review.username}
               </Link>
               <span className="review-detail__dot">·</span>
               <span className="review-detail__date">{formatDate(review.created_at)}</span>

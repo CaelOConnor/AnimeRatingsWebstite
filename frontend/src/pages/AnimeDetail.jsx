@@ -48,6 +48,7 @@ export default function AnimeDetail() {
   // action bar state
   const [watchStatus, setWatchStatus]       = useState('');
   const [watchSaving, setWatchSaving]       = useState(false);
+  const [watchError, setWatchError]         = useState(null);
   const [showReviewForm, setShowReviewForm]   = useState(false);
   const [showRatingForm, setShowRatingForm]   = useState(false);
   const [userReview, setUserReview]           = useState(null);
@@ -61,16 +62,16 @@ export default function AnimeDetail() {
   const [reviewRating, setReviewRating] = useState('');
   const [reviewTitle, setReviewTitle]   = useState('');
   const [reviewBody, setReviewBody]     = useState('');
-  const [spoilers, setSpoilers]         = useState(false);
   const [reviewError, setReviewError]   = useState(null);
   const [reviewSaving, setReviewSaving] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
-        const [animeData, reviewData] = await Promise.all([
+        const [animeData, reviewData, watchlistData] = await Promise.all([
           api.get(`/api/anime/${id}`),
           api.get(`/api/reviews?animeId=${id}`),
+          user ? api.get('/api/watchlist') : Promise.resolve(null),
         ]);
         setAnime(animeData);
         setReviews(reviewData);
@@ -78,6 +79,9 @@ export default function AnimeDetail() {
           const existing = reviewData.find(r => r.user_id === user.id) ?? null;
           setUserReview(existing);
           if (existing?.rating != null) setQuickRating(String(existing.rating));
+
+          const watchEntry = watchlistData?.find(w => w.anime_id === id) ?? null;
+          setWatchStatus(watchEntry?.status ?? '');
         }
       } catch (err) {
         setError('Failed to load anime.');
@@ -90,13 +94,19 @@ export default function AnimeDetail() {
 
   async function handleWatchlistChange(e) {
     const status = e.target.value;
-    setWatchStatus(status);
-    if (!status) return;
+    setWatchError(null);
     setWatchSaving(true);
     try {
-      await api.post('/api/watchlist', { animeId: id, status });
-    } catch {
-      // silent fail for now
+      if (watchStatus) {
+        // already on the watchlist — update existing entry
+        await api.patch(`/api/watchlist/${id}`, { status });
+      } else {
+        // not on the watchlist yet — create new entry
+        await api.post('/api/watchlist', { animeId: id, status });
+      }
+      setWatchStatus(status);
+    } catch (err) {
+      setWatchError(err.message || 'Failed to update watchlist.');
     } finally {
       setWatchSaving(false);
     }
@@ -113,12 +123,14 @@ export default function AnimeDetail() {
     try {
       if (userReview) {
         const updated = await api.patch(`/api/reviews/${userReview.id}`, { rating: r });
-        setUserReview(updated);
-        setReviews(prev => prev.map(rv => rv.id === updated.id ? { ...rv, rating: updated.rating } : rv));
+        const merged = { ...updated, username: user.username };
+        setUserReview(merged);
+        setReviews(prev => prev.map(rv => rv.id === merged.id ? { ...rv, rating: merged.rating } : rv));
       } else {
         const newReview = await api.post('/api/reviews', { animeId: id, rating: r });
-        setUserReview(newReview);
-        setReviews(prev => [newReview, ...prev]);
+        const merged = { ...newReview, username: user.username };
+        setUserReview(merged);
+        setReviews(prev => [merged, ...prev]);
       }
       setShowRatingForm(false);
     } catch (err) {
@@ -142,8 +154,8 @@ export default function AnimeDetail() {
           rating: Number(reviewRating),
           title: reviewTitle || null,
           body: reviewBody || null,
-          containsSpoilers: spoilers,
         });
+        savedReview = { ...savedReview, username: user.username };
         setReviews(prev => prev.map(rv => rv.id === savedReview.id ? savedReview : rv));
       } else {
         savedReview = await api.post('/api/reviews', {
@@ -151,8 +163,8 @@ export default function AnimeDetail() {
           rating: Number(reviewRating),
           title: reviewTitle || null,
           body: reviewBody || null,
-          containsSpoilers: spoilers,
         });
+        savedReview = { ...savedReview, username: user.username };
         setReviews(prev => [savedReview, ...prev]);
       }
       setUserReview(savedReview);
@@ -160,7 +172,6 @@ export default function AnimeDetail() {
       setReviewRating('');
       setReviewTitle('');
       setReviewBody('');
-      setSpoilers(false);
     } catch (err) {
       setReviewError(err.message || 'Failed to submit review.');
     } finally {
@@ -288,6 +299,7 @@ export default function AnimeDetail() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+          {watchError && <p className="anime-detail__form-error">{watchError}</p>}
         </div>
         )}
         {isLoggedIn && showRatingForm && (
@@ -360,15 +372,6 @@ export default function AnimeDetail() {
             />
           </label>
 
-          <label className="anime-detail__form-checkbox">
-            <input
-              type="checkbox"
-              checked={spoilers}
-              onChange={e => setSpoilers(e.target.checked)}
-            />
-            Contains spoilers
-          </label>
-
           {reviewError && <p className="anime-detail__form-error">{reviewError}</p>}
 
           <button
@@ -405,9 +408,6 @@ export default function AnimeDetail() {
                   </Link>
                   {review.rating != null && (
                     <span className="anime-detail__review-rating">{review.rating}<span className="anime-detail__review-rating-denom">/10</span></span>
-                  )}
-                  {review.contains_spoilers && (
-                    <span className="anime-detail__spoiler-badge">Spoilers</span>
                   )}
                 </div>
 
