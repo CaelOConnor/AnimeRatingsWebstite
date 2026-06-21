@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { getUserById, deleteUserById, banUser } from '../db/users.js';
+import { getUserById, deleteUserById, banUser, unbanUser } from '../db/users.js';
 import { getReviewById, deleteReview } from '../db/reviews.js';
 import { getCommentById, deleteComment } from '../db/comments.js';
 import { getUsersByRole, getBannedUsers, getRecentReviews } from '../db/admin.js';
@@ -104,6 +104,31 @@ router.post('/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// ── POST /api/admin/users/:id/unban ───────────────────────────────────────────
+// Admin only. Sets is_banned = false. Does not need to touch Redis — the
+// user will simply be able to log in again and obtain a fresh, valid token.
+
+router.post('/users/:id/unban', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  if (!UUID_REGEX.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
+  }
+
+  try {
+    const user = await getUserById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const unbanned = await unbanUser(id);
+    res.json(ADMIN_USER_FIELDS(unbanned));
+  } catch (err) {
+    console.error('[POST /api/admin/users/:id/unban]', err);
+    res.status(500).json({ error: 'Failed to unban user.' });
+  }
+});
+
 // ── DELETE /api/admin/users/:id ───────────────────────────────────────────────
 // Admin only. Hard-deletes the user — cascades to all child rows.
 
@@ -120,13 +145,25 @@ router.delete('/users/:id', requireAuth, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
+    // ── GET /api/admin/reviews ────────────────────────────────────────────────────
+
+    // replace:
     await deleteUserById(id);
+
+    // Invalidate every active token for this user immediately — without
+    // this, a deleted user's existing JWT would still pass authenticateToken
+    // until natural expiry, since req.user is built from the token payload
+    // alone with no DB existence check.
+    await denylistAllUserTokens(id);
+
     res.status(204).send();
   } catch (err) {
     console.error('[DELETE /api/admin/users/:id]', err);
     res.status(500).json({ error: 'Failed to delete user.' });
   }
 });
+
+// ── GET /api/admin/reviews ────────────────────────────────────────────────────
 
 // ── GET /api/admin/reviews ────────────────────────────────────────────────────
 // Mod + admin. Returns recent reviews for the moderation queue.

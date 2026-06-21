@@ -284,6 +284,79 @@ describe('POST /api/admin/users/:id/ban', () => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/admin/users/:id/unban
+// ---------------------------------------------------------------------------
+
+describe('POST /api/admin/users/:id/unban', () => {
+  let targetUser;
+
+  beforeAll(async () => {
+    ({ user: targetUser } = await createTestUser());
+    await query(`UPDATE users SET is_banned = true WHERE id = $1`, [targetUser.id]);
+  });
+
+  afterAll(async () => {
+    await query(`DELETE FROM users WHERE id = $1`, [targetUser.id]);
+  });
+
+  it('returns 200 and sets is_banned to false for an admin', async () => {
+    const res = await request
+      .post(`/api/admin/users/${targetUser.id}/unban`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.is_banned).toBe(false);
+  });
+
+  it('returns 200 when unbanning an already-unbanned user (idempotent)', async () => {
+    const res = await request
+      .post(`/api/admin/users/${targetUser.id}/unban`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.is_banned).toBe(false);
+  });
+
+  it('returns 403 for a moderator', async () => {
+    const res = await request
+      .post(`/api/admin/users/${targetUser.id}/unban`)
+      .set('Authorization', `Bearer ${modToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 403 for a regular user', async () => {
+    const res = await request
+      .post(`/api/admin/users/${targetUser.id}/unban`)
+      .set('Authorization', `Bearer ${regularToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for a non-existent user id', async () => {
+    const res = await request
+      .post('/api/admin/users/00000000-0000-4000-8000-000000000000/unban')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 for a non-UUID id', async () => {
+    const res = await request
+      .post('/api/admin/users/not-a-uuid/unban')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request.post(`/api/admin/users/${targetUser.id}/unban`);
+
+    expect(res.status).toBe(401);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // DELETE /api/admin/users/:id
 // ---------------------------------------------------------------------------
 
@@ -301,6 +374,21 @@ describe('DELETE /api/admin/users/:id', () => {
     const check = await request
       .get(`/api/users/${deleteTarget.id}`)
     expect(check.status).toBe(404);
+  });
+
+  it('invalidates the deleted user\'s active tokens in Redis', async () => {
+    const { user: freshUser, token: freshToken } = await createTestUser();
+
+    await request
+      .delete(`/api/admin/users/${freshUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    // Any authenticated request with the old token should now return 401
+    const res = await request
+      .get('/api/watchlist')
+      .set('Authorization', `Bearer ${freshToken}`);
+
+    expect(res.status).toBe(401);
   });
 
   it('returns 403 for a moderator', async () => {

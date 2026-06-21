@@ -17,3 +17,6 @@ do this: npm install --save-dev supertest
 for dev to load 100 shows:
 $token = "jwt_here"
 docker compose exec -e SEED_TOKEN=$token backend node seed.js
+
+
+to create an admin account: docker compose exec backend node scripts/createAdmin.js
