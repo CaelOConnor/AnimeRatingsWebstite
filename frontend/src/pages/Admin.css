@@ -1,0 +1,198 @@
+.admin {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 24px 64px;
+}
+
+.admin__container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 24px;
+}
+
+.admin__section {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.admin__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin__section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.admin__controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin__search {
+  padding: 8px 12px;
+  border: 1px solid var(--color-text-tertiary);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  min-width: 240px;
+}
+
+.admin__search:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+.admin__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin__error {
+  background: #FDECEC;
+  color: #B3261E;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.admin__state {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.admin__state--error {
+  color: #B3261E;
+}
+
+.admin__table-wrap {
+  overflow-x: auto;
+}
+
+.admin__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.admin__table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-bg);
+  white-space: nowrap;
+}
+
+.admin__table td {
+  padding: 12px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-bg);
+  vertical-align: middle;
+}
+
+.admin__role {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+}
+
+.admin__role--admin {
+  background: var(--color-accent);
+  color: #FFFFFF;
+}
+
+.admin__role--moderator {
+  background: var(--color-accent-dark);
+  color: #FFFFFF;
+}
+
+.admin__status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin__status--active {
+  background: #E6F4EA;
+  color: #1E7A34;
+}
+
+.admin__status--banned {
+  background: #FDECEC;
+  color: #B3261E;
+}
+
+.admin__actions {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.admin__btn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.admin__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin__btn:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.admin__btn--secondary {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.admin__btn--warning {
+  background: #FCEFD9;
+  color: #92600A;
+}
+
+.admin__btn--danger {
+  background: #FDECEC;
+  color: #B3261E;
+}
