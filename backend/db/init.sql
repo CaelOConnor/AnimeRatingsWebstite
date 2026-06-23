@@ -92,6 +92,23 @@ CREATE TABLE comments (
 CREATE INDEX idx_comments_review ON comments (review_id);
 CREATE INDEX idx_comments_user   ON comments (user_id);
 
+-- ── Reports ───────────────────────────────────────────────────────────────────
+CREATE TABLE reports (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reporter_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  target_type     TEXT        NOT NULL CHECK (target_type IN ('review', 'comment', 'user')),
+  target_id       UUID        NOT NULL,
+  reason          TEXT,
+  status          TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'resolved', 'dismissed')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at     TIMESTAMPTZ,
+  resolved_by     UUID REFERENCES users(id) ON DELETE SET NULL,
+  reported_user_id UUID       NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_reports_reported_user ON reports (reported_user_id);
+CREATE INDEX idx_reports_status        ON reports (status);
+
 -- ── Auto-update updated_at ────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$

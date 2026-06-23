@@ -1,0 +1,136 @@
+.reports {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+.reports__header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.reports__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.reports__count {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.reports__empty,
+.reports__error {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.reports__error {
+  color: #B3261E;
+}
+
+.reports__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.reports__table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid #EBEBF0;
+}
+
+.reports__table td {
+  padding: 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid #EBEBF0;
+  color: var(--color-text-primary);
+}
+
+.reports__row:last-child td {
+  border-bottom: none;
+}
+
+.reports__user-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reports__user-link:hover {
+  text-decoration: underline;
+}
+
+.reports__badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reports__badge--banned {
+  background: #FDECEC;
+  color: #B3261E;
+}
+
+.reports__count-cell {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.reports__reason {
+  color: var(--color-text-secondary);
+  max-width: 260px;
+}
+
+.reports__no-reason {
+  color: var(--color-text-tertiary);
+}
+
+.reports__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.reports__btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.reports__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reports__btn--ban {
+  background: #FDECEC;
+  color: #B3261E;
+}
+
+.reports__btn--ban:hover:not(:disabled) {
+  background: #F5C6C6;
+}
+
+.reports__btn--dismiss {
+  background: #F0EFF7;
+  color: var(--color-accent-dark);
+}
+
+.reports__btn--dismiss:hover:not(:disabled) {
+  background: #E2E0F0;
+}

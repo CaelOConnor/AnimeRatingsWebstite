@@ -3,7 +3,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getUserById, deleteUserById, banUser, unbanUser } from '../db/users.js';
 import { getReviewById, deleteReview } from '../db/reviews.js';
 import { getCommentById, deleteComment } from '../db/comments.js';
-import { getUsersByRole, getBannedUsers, getRecentReviews } from '../db/admin.js';
+import { getUsersByRole, getBannedUsers, getRecentReviews, getReports, dismissAllReportsForUser } from '../db/admin.js';
 import { denylistAllUserTokens } from '../services/redis.js';
 
 const router = Router();
@@ -223,6 +223,44 @@ router.delete('/comments/:id', requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[DELETE /api/admin/comments/:id]', err);
     res.status(500).json({ error: 'Failed to delete comment.' });
+  }
+});
+
+// ── GET /api/admin/reports ────────────────────────────────────────────────────
+// Mod + admin. Returns pending reports grouped by reported user.
+
+router.get('/reports', requireAuth, requireMod, async (req, res) => {
+  try {
+    const status = req.query.status || 'pending';
+    const reports = await getReports(status);
+    res.json(reports);
+  } catch (err) {
+    console.error('[GET /api/admin/reports]', err);
+    res.status(500).json({ error: 'Failed to fetch reports.' });
+  }
+});
+
+// ── POST /api/admin/reports/dismiss/:userId ───────────────────────────────────
+// Mod + admin. Dismisses all pending reports against a user.
+
+router.post('/reports/dismiss/:userId', requireAuth, requireMod, async (req, res) => {
+  const { userId } = req.params;
+
+  if (!UUID_REGEX.test(userId)) {
+    return res.status(400).json({ error: 'userId must be a valid UUID.' });
+  }
+
+  try {
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    await dismissAllReportsForUser(userId, req.user.id);
+    res.status(204).send();
+  } catch (err) {
+    console.error('[POST /api/admin/reports/dismiss/:userId]', err);
+    res.status(500).json({ error: 'Failed to dismiss reports.' });
   }
 });
 

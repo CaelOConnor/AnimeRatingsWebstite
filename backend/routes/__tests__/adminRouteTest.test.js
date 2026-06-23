@@ -636,3 +636,190 @@ describe('DELETE /api/admin/comments/:id', () => {
     expect(res.status).toBe(401);
   });
 });
+
+// ---------------------------------------------------------------------------
+// GET /api/admin/reports
+// ---------------------------------------------------------------------------
+
+describe('GET /api/admin/reports', () => {
+  let reportedUser;
+  let review;
+
+  beforeEach(async () => {
+    ({ user: reportedUser } = await createTestUser());
+    review = await makeReview(reportedUser.id, anime.id);
+    await query(
+      `INSERT INTO reports (reporter_id, target_type, target_id, reported_user_id, reason)
+       VALUES ($1, 'review', $2, $3, 'Spam')`,
+      [regularUser.id, review.id, reportedUser.id]
+    );
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM reports WHERE reported_user_id = $1`, [reportedUser.id]);
+    await query(`DELETE FROM reviews WHERE id = $1`, [review.id]).catch(() => {});
+    await query(`DELETE FROM users WHERE id = $1`, [reportedUser.id]).catch(() => {});
+  });
+
+  it('returns 200 and an array for an admin', async () => {
+    const res = await request
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns 200 and an array for a moderator', async () => {
+    const res = await request
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${modToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns the correct fields on each row', async () => {
+    const res = await request
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    const row = res.body.find(r => r.reported_user_id === reportedUser.id);
+    expect(row).toBeDefined();
+    expect(row.reported_username).toBeDefined();
+    expect(row.report_count).toBeGreaterThanOrEqual(1);
+    expect(row.latest_report_at).toBeDefined();
+  });
+
+  it('aggregates multiple reports against the same user into one row', async () => {
+    await query(
+      `INSERT INTO reports (reporter_id, target_type, target_id, reported_user_id, reason)
+       VALUES ($1, 'review', $2, $3, 'Harassment')`,
+      [adminUser.id, review.id, reportedUser.id]
+    );
+
+    const res = await request
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const rows = res.body.filter(r => r.reported_user_id === reportedUser.id);
+    expect(rows.length).toBe(1);
+    expect(rows[0].report_count).toBe(2);
+  });
+
+  it('returns 403 for a regular user', async () => {
+    const res = await request
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${regularToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request.get('/api/admin/reports');
+    expect(res.status).toBe(401);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/reports/dismiss/:userId
+// ---------------------------------------------------------------------------
+
+describe('POST /api/admin/reports/dismiss/:userId', () => {
+  let reportedUser;
+  let review;
+
+  beforeEach(async () => {
+    ({ user: reportedUser } = await createTestUser());
+    review = await makeReview(reportedUser.id, anime.id);
+    await query(
+      `INSERT INTO reports (reporter_id, target_type, target_id, reported_user_id, reason)
+       VALUES ($1, 'review', $2, $3, 'Spam')`,
+      [regularUser.id, review.id, reportedUser.id]
+    );
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM reports WHERE reported_user_id = $1`, [reportedUser.id]);
+    await query(`DELETE FROM reviews WHERE id = $1`, [review.id]).catch(() => {});
+    await query(`DELETE FROM users WHERE id = $1`, [reportedUser.id]).catch(() => {});
+  });
+
+  it('returns 204 and dismisses all pending reports for an admin', async () => {
+    const res = await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(204);
+
+    const check = await query(
+      `SELECT * FROM reports WHERE reported_user_id = $1 AND status = 'pending'`,
+      [reportedUser.id]
+    );
+    expect(check.rows.length).toBe(0);
+  });
+
+  it('returns 204 and dismisses all pending reports for a moderator', async () => {
+    const res = await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${modToken}`);
+
+    expect(res.status).toBe(204);
+  });
+
+  it('sets resolved_by to the acting moderator', async () => {
+    await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${modToken}`);
+
+    const check = await query(
+      `SELECT resolved_by FROM reports WHERE reported_user_id = $1`,
+      [reportedUser.id]
+    );
+    expect(check.rows[0].resolved_by).toBe(modUser.id);
+  });
+
+  it('is idempotent — dismissing twice returns 204 both times', async () => {
+    await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const res = await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(204);
+  });
+
+  it('returns 404 for a non-existent user', async () => {
+    const res = await request
+      .post('/api/admin/reports/dismiss/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 for a non-UUID id', async () => {
+    const res = await request
+      .post('/api/admin/reports/dismiss/not-a-uuid')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 403 for a regular user', async () => {
+    const res = await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`)
+      .set('Authorization', `Bearer ${regularToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request
+      .post(`/api/admin/reports/dismiss/${reportedUser.id}`);
+
+    expect(res.status).toBe(401);
+  });
+});

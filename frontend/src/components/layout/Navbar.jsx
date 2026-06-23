@@ -110,21 +110,38 @@ function SearchSort({ placeholder, searchQuery, setSearchQuery, sortBy, setSortB
   );
 }
 
-function AccountButton({ user }) {
+function AccountButton({ user, onLogout }) {
+  const isAdmin = user.role_type === 'admin';
+
   return (
-    <Link to={`/users/${user.id}`} className="navbar__account-btn">
-      <span className="navbar__avatar">
-        {user.username?.[0]?.toUpperCase() ?? '?'}
-      </span>
-      {user.username}
-    </Link>
+    <div className="navbar__account-group">
+      {isAdmin && (
+        <>
+          <Link to="/reports" className="navbar__btn navbar__btn--ghost">Reports</Link>
+          <Link to="/admin" className="navbar__btn navbar__btn--ghost">Admin</Link>
+        </>
+      )}
+      <Link to={`/users/${user.id}`} className="navbar__account-btn">
+        <span className="navbar__avatar">
+          {user.username?.[0]?.toUpperCase() ?? '?'}
+        </span>
+        {user.username}
+      </Link>
+      <button
+        type="button"
+        className="navbar__btn navbar__btn--ghost"
+        onClick={onLogout}
+      >
+        Log out
+      </button>
+    </div>
   );
 }
 
 // ─── Navbar ──────────────────────────────────────────────────────────────────
 
 export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [loginOpen, setLoginOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -160,7 +177,7 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
   ) : null;
 
   const right = user
-    ? <AccountButton user={user} />
+    ? <AccountButton user={user} onLogout={logout} />
     : (
       <div className="navbar__auth-group">
         <button onClick={() => setLoginOpen(true)} className="navbar__btn navbar__btn--ghost">Log in</button>
