@@ -8,6 +8,7 @@ import watchlistRoutes from './routes/watchlist.js';
 import animeRoutes from './routes/anime.js';
 import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
+import reportRoutes from './routes/reports.js';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/anime', animeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from backend!' });

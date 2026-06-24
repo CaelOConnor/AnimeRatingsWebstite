@@ -88,13 +88,18 @@
   color: var(--color-text-primary);
 }
 
-.reports__reason {
-  color: var(--color-text-secondary);
-  max-width: 260px;
-}
-
 .reports__no-reason {
   color: var(--color-text-tertiary);
+}
+
+.reports__content-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reports__content-link:hover {
+  text-decoration: underline;
 }
 
 .reports__actions {

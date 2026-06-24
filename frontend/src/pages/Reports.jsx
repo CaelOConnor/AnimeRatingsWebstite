@@ -85,7 +85,7 @@ export default function Reports() {
             <tr>
               <th>Reported User</th>
               <th>Reports</th>
-              <th>Latest Reason</th>
+              <th>Latest Report</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -104,8 +104,25 @@ export default function Reports() {
                   )}
                 </td>
                 <td className="reports__count-cell">{row.report_count}</td>
-                <td className="reports__reason">
-                  {row.latest_reason ?? <span className="reports__no-reason">—</span>}
+                <td className="reports__link-cell">
+                  {row.latest_target_type === 'review' && (
+                    <Link to={`/reviews/${row.latest_target_id}`} className="reports__content-link">
+                      View Review
+                    </Link>
+                  )}
+                  {row.latest_target_type === 'comment' && (
+                    <Link to={`/reviews/${row.latest_target_id}`} className="reports__content-link">
+                      View Comment
+                    </Link>
+                  )}
+                  {row.latest_target_type === 'user' && (
+                    <Link to={`/users/${row.latest_target_id}`} className="reports__content-link">
+                      View Profile
+                    </Link>
+                  )}
+                  {!row.latest_target_type && (
+                    <span className="reports__no-reason">—</span>
+                  )}
                 </td>
                 <td className="reports__actions">
                   <button

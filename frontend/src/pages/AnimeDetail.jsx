@@ -52,6 +52,7 @@ export default function AnimeDetail() {
   const [showReviewForm, setShowReviewForm]   = useState(false);
   const [showRatingForm, setShowRatingForm]   = useState(false);
   const [userReview, setUserReview]           = useState(null);
+  const [reportedReviews, setReportedReviews] = useState(new Set());
 
   // quick rating form
   const [quickRating, setQuickRating]             = useState('');
@@ -176,6 +177,19 @@ export default function AnimeDetail() {
       setReviewError(err.message || 'Failed to submit review.');
     } finally {
       setReviewSaving(false);
+    }
+  }
+
+  async function handleReport(review) {
+    try {
+      await api.post('/api/reports', {
+        targetType: 'review',
+        targetId: review.id,
+        reportedUserId: review.user_id,
+      });
+      setReportedReviews(prev => new Set([...prev, review.id]));
+    } catch (err) {
+      console.error('Failed to submit report:', err.message);
     }
   }
 
@@ -430,9 +444,15 @@ export default function AnimeDetail() {
                     >
                       💬 Comments
                     </Link>
-                    <button className="anime-detail__review-btn anime-detail__review-btn--report">
-                      🚩 Report
-                    </button>
+                    {isLoggedIn && review.user_id !== user.id && (
+                      <button
+                        className="anime-detail__review-btn anime-detail__review-btn--report"
+                        onClick={() => handleReport(review)}
+                        disabled={reportedReviews.has(review.id)}
+                      >
+                        {reportedReviews.has(review.id) ? 'Reported' : '🚩 Report'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

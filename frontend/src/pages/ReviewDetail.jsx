@@ -119,6 +119,7 @@ export default function ReviewDetail() {
   const [error, setError] = useState(null);
 
   const [composing, setComposing] = useState(false);
+  const [reported, setReported]   = useState(false);
   const [commentBody, setCommentBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -253,6 +254,26 @@ export default function ReviewDetail() {
               >
                 Add Comment
               </button>
+              {user.id !== review.user_id && (
+                <button
+                  className="review-detail__btn review-detail__btn--ghost"
+                  disabled={reported}
+                  onClick={async () => {
+                    try {
+                      await api.post('/api/reports', {
+                        targetType: 'review',
+                        targetId: review.id,
+                        reportedUserId: review.user_id,
+                      });
+                      setReported(true);
+                    } catch (err) {
+                      console.error('Failed to submit report:', err.message);
+                    }
+                  }}
+                >
+                  {reported ? 'Reported' : '🚩 Report'}
+                </button>
+              )}
             </div>
           )}
         </article>

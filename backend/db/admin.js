@@ -88,7 +88,23 @@ export async function getReports(status = 'pending') {
           AND r3.status = $1
         ORDER BY r3.created_at DESC
         LIMIT 1
-      ) AS latest_report_id
+      ) AS latest_report_id,
+      (
+        SELECT r4.target_type
+        FROM reports r4
+        WHERE r4.reported_user_id = u.id
+          AND r4.status = $1
+        ORDER BY r4.created_at DESC
+        LIMIT 1
+      ) AS latest_target_type,
+      (
+        SELECT r5.target_id
+        FROM reports r5
+        WHERE r5.reported_user_id = u.id
+          AND r5.status = $1
+        ORDER BY r5.created_at DESC
+        LIMIT 1
+      ) AS latest_target_id
      FROM reports r
      JOIN users u ON u.id = r.reported_user_id
      WHERE r.status = $1
