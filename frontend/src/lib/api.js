@@ -43,4 +43,21 @@ export const api = {
   put:    (path, body)   => request(path, { method: 'PUT',    body: JSON.stringify(body) }),
   patch:  (path, body)   => request(path, { method: 'PATCH',  body: JSON.stringify(body) }),
   delete: (path)         => request(path, { method: 'DELETE' }),
+  upload: (path, formData) => {
+    const token = getToken();
+    return fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formData,
+    }).then(async (res) => {
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      return data;
+    });
+  },
 };

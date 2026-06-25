@@ -30,6 +30,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - uploads-data:/app/uploads
     environment:
       - NODE_ENV=development
       - PORT=3001
@@ -102,3 +103,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  uploads-data:

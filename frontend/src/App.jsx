@@ -13,7 +13,7 @@ function Layout() {
   const [sortBy, setSortBy] = useState('recent');
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', color: 'var(--color-text)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
       {showNavbar && (
         <Navbar
           searchQuery={searchQuery}
