@@ -72,7 +72,8 @@ export async function getReviewsByUserId(userId) {
        reviews.body,
        reviews.created_at,
        reviews.updated_at,
-       anime.title
+       anime.title,
+       anime.poster_path
      FROM reviews
      JOIN anime ON reviews.anime_id = anime.id
      WHERE reviews.user_id = $1

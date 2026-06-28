@@ -14,6 +14,11 @@ To take down container run: docker compose down
 do this: npm install --save-dev supertest
 
 
+to get the token:
+$response = Invoke-RestMethod -Uri "http://localhost:3001/api/auth/login" -Method Post -ContentType "application/json" -Body '{"identifier": "EMAIL", "password": "PASSWORD"}'
+$token = $response.token
+$token
+
 for dev to load 100 shows:
 $token = "jwt_here"
 docker compose exec -e SEED_TOKEN=$token backend node seed.js

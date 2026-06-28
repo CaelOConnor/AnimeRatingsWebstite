@@ -398,11 +398,15 @@ export async function getRecentlyCachedAnime(limit) {
   // ------------------------------------------------------------------
   const result = await query(
     `SELECT
-      id, tmdb_id, tmdb_type, season_number, title, original_title,
-      overview, poster_path, backdrop_path, episode_count, season_count,
-      status, first_air_date, genres, cached_at
-    FROM anime
-    ORDER BY cached_at DESC
+      a.id, a.tmdb_id, a.tmdb_type, a.season_number, a.title, a.original_title,
+      a.overview, a.poster_path, a.backdrop_path, a.episode_count, a.season_count,
+      a.status, a.first_air_date, a.genres, a.cached_at,
+      ROUND(AVG(r.rating), 2) AS average_rating,
+      COUNT(r.id)             AS review_count
+    FROM anime a
+    LEFT JOIN reviews r ON r.anime_id = a.id
+    GROUP BY a.id
+    ORDER BY a.cached_at DESC
     LIMIT $1`,
     [limit]
   );
@@ -440,12 +444,16 @@ export async function searchAnimeByTitle(searchQuery) {
   // ------------------------------------------------------------------
   const result = await query(
     `SELECT
-      id, tmdb_id, tmdb_type, season_number, title, original_title,
-      overview, poster_path, backdrop_path, episode_count, season_count,
-      status, first_air_date, genres, cached_at
-    FROM anime
-    WHERE title ILIKE $1
-    ORDER BY title ASC`,
+      a.id, a.tmdb_id, a.tmdb_type, a.season_number, a.title, a.original_title,
+      a.overview, a.poster_path, a.backdrop_path, a.episode_count, a.season_count,
+      a.status, a.first_air_date, a.genres, a.cached_at,
+      ROUND(AVG(r.rating), 2) AS average_rating,
+      COUNT(r.id)             AS review_count
+    FROM anime a
+    LEFT JOIN reviews r ON r.anime_id = a.id
+    WHERE a.title ILIKE $1
+    GROUP BY a.id
+    ORDER BY a.title ASC`,
     [`%${searchQuery.trim()}%`]
   );
 

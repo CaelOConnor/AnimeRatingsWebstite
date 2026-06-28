@@ -109,8 +109,8 @@ router.post('/login', async (req, res) => {
   try {
     const result = await query(
       `SELECT id, username, email, password_hash, avatar_url, bio, is_banned, role_type, created_at
-       FROM users WHERE email = $1 OR username = $1`,
-      [identifier.toLowerCase()]
+       FROM users WHERE email = LOWER($1) OR username = $1`,
+      [identifier]
     );
 
     const user = result.rows[0];
