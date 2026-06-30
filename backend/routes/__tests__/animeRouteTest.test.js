@@ -200,6 +200,127 @@ describe('GET /api/anime/browse', () => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/anime/search and /api/anime/browse — season/year/genre filters
+// ---------------------------------------------------------------------------
+
+describe('season/year/genre filters', () => {
+  let winterAnime, summerAnime, year2023Anime, actionAnime, dramaAnime;
+
+  beforeAll(async () => {
+    [winterAnime, summerAnime, year2023Anime, actionAnime, dramaAnime] = await Promise.all([
+      makeAnime({ title: 'Winter Filter Show', firstAirDate: '2024-01-15' }),
+      makeAnime({ title: 'Summer Filter Show', firstAirDate: '2024-07-15' }),
+      makeAnime({ title: 'Old Year Show', firstAirDate: '2023-05-01' }),
+      makeAnime({ title: 'Action Filter Show', genres: ['Action & Adventure'] }),
+      makeAnime({ title: 'Drama Filter Show', genres: ['Drama'] }),
+    ]);
+  });
+
+  describe('on /browse', () => {
+    it('filters by a valid season', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', season: 'winter' });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(winterAnime.id);
+      expect(ids).not.toContain(summerAnime.id);
+    });
+
+    it('returns 400 for an invalid season', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', season: 'monsoon' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('filters by a valid year', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', year: '2023' });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(year2023Anime.id);
+      expect(ids).not.toContain(winterAnime.id);
+    });
+
+    it('returns 400 for a malformed year', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', year: '23' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('filters by a single genre', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', genre: 'Action & Adventure' });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(actionAnime.id);
+      expect(ids).not.toContain(dramaAnime.id);
+    });
+
+    it('filters by multiple genres with OR matching', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', genre: ['Action & Adventure', 'Drama'] });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(actionAnime.id);
+      expect(ids).toContain(dramaAnime.id);
+    });
+
+    it('returns 400 for an unknown genre', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', genre: 'Not A Real Genre' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('combines season and year filters', async () => {
+      const res = await request
+        .get('/api/anime/browse')
+        .query({ mode: 'recent', season: 'winter', year: '2024' });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(winterAnime.id);
+      expect(ids).not.toContain(summerAnime.id);
+      expect(ids).not.toContain(year2023Anime.id);
+    });
+  });
+
+  describe('on /search', () => {
+    it('combines a title query with a genre filter', async () => {
+      const res = await request
+        .get('/api/anime/search')
+        .query({ q: 'Filter Show', genre: 'Action & Adventure' });
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((a) => a.id);
+      expect(ids).toContain(actionAnime.id);
+      expect(ids).not.toContain(dramaAnime.id);
+    });
+
+    it('returns 400 for an invalid season on search', async () => {
+      const res = await request
+        .get('/api/anime/search')
+        .query({ q: 'Filter Show', season: 'monsoon' });
+
+      expect(res.status).toBe(400);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET /api/anime/:id
 // ---------------------------------------------------------------------------
 

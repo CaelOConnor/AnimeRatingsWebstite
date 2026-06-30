@@ -140,3 +140,45 @@ describe('getRecentlyCachedAnime', () => {
     });
   });
 });
+
+
+describe('season/year filters', () => {
+    it('returns only anime matching the given season', async () => {
+      await createTestAnime({ tmdbId: 10161, title: 'Winter Show', firstAirDate: '2024-01-15' });
+      await createTestAnime({ tmdbId: 10162, title: 'Summer Show', firstAirDate: '2024-07-15' });
+
+      const results = await getRecentlyCachedAnime(10, { season: 'winter' });
+
+      expect(results.some((r) => r.tmdb_id === 10161)).toBe(true);
+      expect(results.some((r) => r.tmdb_id === 10162)).toBe(false);
+    });
+
+    it('returns only anime matching the given year', async () => {
+      await createTestAnime({ tmdbId: 10161, title: '2023 Show', firstAirDate: '2023-05-01' });
+      await createTestAnime({ tmdbId: 10162, title: '2024 Show', firstAirDate: '2024-05-01' });
+
+      const results = await getRecentlyCachedAnime(10, { year: 2024 });
+
+      expect(results.some((r) => r.tmdb_id === 10162)).toBe(true);
+      expect(results.some((r) => r.tmdb_id === 10161)).toBe(false);
+    });
+
+    it('excludes anime with a null first_air_date when filtering by season', async () => {
+      await createTestAnime({ tmdbId: 10161, firstAirDate: null });
+
+      const results = await getRecentlyCachedAnime(10, { season: 'winter' });
+      expect(results.some((r) => r.tmdb_id === 10161)).toBe(false);
+    });
+  });
+
+  describe('genre filter', () => {
+    it('returns anime matching any of the given genres (OR match)', async () => {
+      await createTestAnime({ tmdbId: 10161, title: 'Action Show', genres: ['Action & Adventure'] });
+      await createTestAnime({ tmdbId: 10162, title: 'Drama Show', genres: ['Drama'] });
+
+      const results = await getRecentlyCachedAnime(10, { genres: ['Action & Adventure'] });
+
+      expect(results.some((r) => r.tmdb_id === 10161)).toBe(true);
+      expect(results.some((r) => r.tmdb_id === 10162)).toBe(false);
+    });
+  });

@@ -14,6 +14,64 @@ const router = Router();
 const VALID_BROWSE_MODES = new Set(['top_rated', 'recent']);
 const TMDB_ANIME_KEYWORD_ID = 210024;
 
+const VALID_SEASONS = new Set(['winter', 'spring', 'summer', 'fall']);
+
+// Merged union of TMDB tv + movie genre sets. Anime entries typically only
+// use a subset of these, but both fetch paths can write any of them.
+const VALID_GENRES = new Set([
+  'Action & Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
+  'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Kids', 'Music',
+  'Mystery', 'News', 'Reality', 'Romance', 'Sci-Fi & Fantasy',
+  'Science Fiction', 'Soap', 'Talk', 'Thriller', 'War', 'War & Politics',
+  'Western',
+]);
+
+/**
+ * parseAnimeFilters
+ * ------------------
+ * Validates and normalizes optional season/year/genre query params shared
+ * by /search and /browse. Returns { filters } on success or { error } with
+ * a user-facing message on the first invalid value found.
+ *
+ * - season: case-insensitive, must be one of VALID_SEASONS
+ * - year:   must be a 4-digit integer in a sane range
+ * - genre:  repeatable query param (?genre=A&genre=B); each value must be
+ *           a known TMDB genre. Normalized to an array for the db layer's
+ *           array-overlap (OR match) filtering.
+ */
+function parseAnimeFilters(query) {
+  const filters = {};
+
+  if (query.season !== undefined) {
+    const season = String(query.season).toLowerCase();
+    if (!VALID_SEASONS.has(season)) {
+      return { error: `Invalid season. Must be one of: ${[...VALID_SEASONS].join(', ')}.` };
+    }
+    filters.season = season;
+  }
+
+  if (query.year !== undefined) {
+    const rawYear = String(query.year).trim();
+    const year = parseInt(rawYear, 10);
+    if (!/^\d{4}$/.test(rawYear) || isNaN(year) || year < 1900 || year > 2100) {
+      return { error: 'year must be a valid 4-digit year.' };
+    }
+    filters.year = year;
+  }
+
+  if (query.genre !== undefined) {
+    const genres = Array.isArray(query.genre) ? query.genre : [query.genre];
+    for (const g of genres) {
+      if (!VALID_GENRES.has(g)) {
+        return { error: `Invalid genre: "${g}".` };
+      }
+    }
+    filters.genres = genres;
+  }
+
+  return { filters };
+}
+
 // ── GET /api/anime/search?q= ──────────────────────────────────────────────────
 router.get('/search', async (req, res) => {
   const { q } = req.query;
@@ -22,8 +80,13 @@ router.get('/search', async (req, res) => {
     return res.status(400).json({ error: 'q query parameter is required and cannot be empty.' });
   }
 
+  const { filters, error } = parseAnimeFilters(req.query);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
   try {
-    const results = await searchAnimeByTitle(q.trim());
+    const results = await searchAnimeByTitle(q.trim(), filters);
     res.json(results);
   } catch (err) {
     console.error('[GET /api/anime/search]', err);
@@ -41,13 +104,18 @@ router.get('/browse', async (req, res) => {
     });
   }
 
+  const { filters, error } = parseAnimeFilters(req.query);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
   try {
     let results = mode === 'recent'
-      ? await getRecentlyCachedAnime(50)
-      : await getTopRatedAnime(50);
+      ? await getRecentlyCachedAnime(50, filters)
+      : await getTopRatedAnime(50, null, filters);
 
     if (results.length === 0 && mode === 'top_rated') {
-      results = await getRecentlyCachedAnime(50);
+      results = await getRecentlyCachedAnime(50, filters);
     }
 
     res.json(results);

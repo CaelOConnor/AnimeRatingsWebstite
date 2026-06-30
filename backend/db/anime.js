@@ -301,6 +301,49 @@ export async function getAnimeById(id) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Shared helper — appends optional season/year/genre filters to a WHERE
+// clause and pushes the corresponding params. Used by getTopRatedAnime,
+// getRecentlyCachedAnime, and searchAnimeByTitle so all three filter
+// identically.
+//
+// season:  'winter' | 'spring' | 'summer' | 'fall' — derived from the month
+//          of first_air_date via CASE. Rows with a null first_air_date
+//          naturally fail this comparison (NULL = anything is NULL, not
+//          true), so they're correctly excluded whenever season is given.
+// year:    matched against EXTRACT(YEAR FROM first_air_date). Same null
+//          behavior applies.
+// genres:  string[] — matched via array overlap (&&), i.e. "match ANY".
+//
+// No validation here — unknown season/genre strings are the route layer's
+// responsibility. This stays permissive and just filters on what it's given.
+// ---------------------------------------------------------------------------
+function buildAnimeFilters(params, filters = {}, alias = 'a') {
+  const { season, year, genres } = filters;
+  let clause = '';
+
+  if (season) {
+    const seasonCase = `
+      CASE
+        WHEN EXTRACT(MONTH FROM ${alias}.first_air_date) IN (1,2,3)    THEN 'winter'
+        WHEN EXTRACT(MONTH FROM ${alias}.first_air_date) IN (4,5,6)    THEN 'spring'
+        WHEN EXTRACT(MONTH FROM ${alias}.first_air_date) IN (7,8,9)    THEN 'summer'
+        WHEN EXTRACT(MONTH FROM ${alias}.first_air_date) IN (10,11,12) THEN 'fall'
+      END`;
+    clause += ` AND ${seasonCase} = $${params.push(season)}`;
+  }
+
+  if (year) {
+    clause += ` AND EXTRACT(YEAR FROM ${alias}.first_air_date) = $${params.push(year)}`;
+  }
+
+  if (genres && genres.length > 0) {
+    clause += ` AND ${alias}.genres && $${params.push(genres)}::text[]`;
+  }
+
+  return clause;
+}
+
 // get top rated anime
 /**
  * getTopRatedAnime
@@ -320,7 +363,7 @@ export async function getAnimeById(id) {
  *
  * @returns {Promise<object[]>}
  */
-export async function getTopRatedAnime(limit, tmdbType = null) {
+export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -338,6 +381,7 @@ export async function getTopRatedAnime(limit, tmdbType = null) {
   // ------------------------------------------------------------------
   const params = [limit];
   const typeFilter = tmdbType ? `AND a.tmdb_type = $${params.push(tmdbType)}` : '';
+  const advancedFilter = buildAnimeFilters(params, filters, 'a');
 
   const result = await query(
     `SELECT
@@ -360,7 +404,7 @@ export async function getTopRatedAnime(limit, tmdbType = null) {
       COUNT(r.id)             AS review_count
     FROM anime a
     INNER JOIN reviews r ON r.anime_id = a.id
-    WHERE 1=1 ${typeFilter}
+    WHERE 1=1 ${typeFilter} ${advancedFilter}
     GROUP BY a.id
     ORDER BY average_rating DESC
     LIMIT $1`,
@@ -382,7 +426,7 @@ export async function getTopRatedAnime(limit, tmdbType = null) {
  *
  * @returns {Promise<object[]>}
  */
-export async function getRecentlyCachedAnime(limit) {
+export async function getRecentlyCachedAnime(limit, filters = {}) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -396,6 +440,9 @@ export async function getRecentlyCachedAnime(limit) {
   // ------------------------------------------------------------------
   // Query
   // ------------------------------------------------------------------
+  const params = [limit];
+  const advancedFilter = buildAnimeFilters(params, filters, 'a');
+
   const result = await query(
     `SELECT
       a.id, a.tmdb_id, a.tmdb_type, a.season_number, a.title, a.original_title,
@@ -405,10 +452,11 @@ export async function getRecentlyCachedAnime(limit) {
       COUNT(r.id)             AS review_count
     FROM anime a
     LEFT JOIN reviews r ON r.anime_id = a.id
+    WHERE 1=1 ${advancedFilter}
     GROUP BY a.id
     ORDER BY a.cached_at DESC
     LIMIT $1`,
-    [limit]
+    params
   );
 
   return result.rows;
@@ -426,7 +474,7 @@ export async function getRecentlyCachedAnime(limit) {
  *
  * @returns {Promise<object[]>}
  */
-export async function searchAnimeByTitle(searchQuery) {
+export async function searchAnimeByTitle(searchQuery, filters = {}) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -442,6 +490,9 @@ export async function searchAnimeByTitle(searchQuery) {
   // Wrap the trimmed value in % wildcards for a contains match.
   // Parameterised — never interpolate user input directly into SQL.
   // ------------------------------------------------------------------
+  const params = [`%${searchQuery.trim()}%`];
+  const advancedFilter = buildAnimeFilters(params, filters, 'a');
+
   const result = await query(
     `SELECT
       a.id, a.tmdb_id, a.tmdb_type, a.season_number, a.title, a.original_title,
@@ -451,10 +502,10 @@ export async function searchAnimeByTitle(searchQuery) {
       COUNT(r.id)             AS review_count
     FROM anime a
     LEFT JOIN reviews r ON r.anime_id = a.id
-    WHERE a.title ILIKE $1
+    WHERE a.title ILIKE $1 ${advancedFilter}
     GROUP BY a.id
     ORDER BY a.title ASC`,
-    [`%${searchQuery.trim()}%`]
+    params
   );
 
   return result.rows;

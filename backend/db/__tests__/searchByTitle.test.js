@@ -141,3 +141,28 @@ describe('searchAnimeByTitle', () => {
     });
   });
 });
+
+
+describe('season/year filters', () => {
+    it('combines title search with a season filter', async () => {
+      await createTestAnime({ tmdbId: 10291, title: 'Fullmetal Alchemist', firstAirDate: '2003-10-04' });
+      await createTestAnime({ tmdbId: 10292, title: 'Fullmetal Brotherhood', firstAirDate: '2009-04-05' });
+
+      const results = await searchAnimeByTitle('Fullmetal', { season: 'fall' });
+
+      expect(results.some((r) => r.tmdb_id === 10291)).toBe(true);
+      expect(results.some((r) => r.tmdb_id === 10292)).toBe(false);
+    });
+  });
+
+  describe('genre filter', () => {
+    it('combines title search with a genre filter', async () => {
+      await createTestAnime({ tmdbId: 10291, title: 'Fullmetal Alchemist', genres: ['Action & Adventure'] });
+      await createTestAnime({ tmdbId: 10292, title: 'Fullmetal Brotherhood', genres: ['Drama'] });
+
+      const results = await searchAnimeByTitle('Fullmetal', { genres: ['Action & Adventure'] });
+
+      expect(results.some((r) => r.tmdb_id === 10291)).toBe(true);
+      expect(results.some((r) => r.tmdb_id === 10292)).toBe(false);
+    });
+  });

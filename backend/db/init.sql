@@ -38,6 +38,8 @@ CREATE TABLE anime (
 
 CREATE UNIQUE INDEX idx_anime_tmdb_unique ON anime (tmdb_id, tmdb_type, season_number);
 CREATE INDEX idx_anime_cached_at ON anime (cached_at);
+CREATE INDEX idx_anime_first_air_date ON anime (first_air_date);
+CREATE INDEX idx_anime_genres ON anime USING GIN (genres);
 
 -- ── Watchlist ─────────────────────────────────────────────────────────────────
 CREATE TYPE watchlist_status AS ENUM (

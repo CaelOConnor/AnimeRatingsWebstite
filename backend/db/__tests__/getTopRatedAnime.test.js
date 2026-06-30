@@ -40,7 +40,7 @@ async function createTestUser(suffix = '') {
 
 async function cleanup() {
   await query(`DELETE FROM users WHERE username LIKE 'toprated_%'`);
-  await query('DELETE FROM anime WHERE tmdb_id BETWEEN 10240 AND 10259');
+  await query('DELETE FROM anime WHERE tmdb_id BETWEEN 99990 AND 99999');
 }
 
 // ---------------------------------------------------------------------------
@@ -216,6 +216,113 @@ describe('getTopRatedAnime', () => {
       const types = results.map((r) => r.tmdb_type);
       expect(types).toContain('tv');
       expect(types).toContain('movie');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // season / year filters
+  // -------------------------------------------------------------------------
+
+  describe('season/year filters', () => {
+    it('returns only anime matching the given season', async () => {
+      const userId = await createTestUser();
+      const winter = await createTestAnime({ tmdbId: 99991, title: 'Winter Show', firstAirDate: '2024-01-15' });
+      const summer = await createTestAnime({ tmdbId: 99992, title: 'Summer Show', firstAirDate: '2024-07-15' });
+      await createTestReview({ animeId: winter.id, userId, rating: 8 });
+      await createTestReview({ animeId: summer.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { season: 'winter' });
+
+      expect(results.some((r) => r.id === winter.id)).toBe(true);
+      expect(results.some((r) => r.id === summer.id)).toBe(false);
+    });
+
+    it('returns only anime matching the given year', async () => {
+      const userId = await createTestUser();
+      const y2023 = await createTestAnime({ tmdbId: 99991, title: '2023 Show', firstAirDate: '2023-05-01' });
+      const y2024 = await createTestAnime({ tmdbId: 99992, title: '2024 Show', firstAirDate: '2024-05-01' });
+      await createTestReview({ animeId: y2023.id, userId, rating: 8 });
+      await createTestReview({ animeId: y2024.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { year: 2024 });
+
+      expect(results.some((r) => r.id === y2024.id)).toBe(true);
+      expect(results.some((r) => r.id === y2023.id)).toBe(false);
+    });
+
+    it('combines season and year filters', async () => {
+      const userId = await createTestUser();
+      const match       = await createTestAnime({ tmdbId: 99991, title: 'Match',        firstAirDate: '2024-02-01' });
+      const wrongYear   = await createTestAnime({ tmdbId: 99992, title: 'Wrong Year',   firstAirDate: '2023-02-01' });
+      const wrongSeason = await createTestAnime({ tmdbId: 99993, title: 'Wrong Season', firstAirDate: '2024-08-01' });
+      await createTestReview({ animeId: match.id,       userId, rating: 8 });
+      await createTestReview({ animeId: wrongYear.id,   userId, rating: 8 });
+      await createTestReview({ animeId: wrongSeason.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { season: 'winter', year: 2024 });
+
+      expect(results.some((r) => r.id === match.id)).toBe(true);
+      expect(results.some((r) => r.id === wrongYear.id)).toBe(false);
+      expect(results.some((r) => r.id === wrongSeason.id)).toBe(false);
+    });
+
+    it('excludes anime with a null first_air_date when a season filter is applied', async () => {
+      const userId = await createTestUser();
+      const noDate = await createTestAnime({ tmdbId: 99991, title: 'No Date', firstAirDate: null });
+      await createTestReview({ animeId: noDate.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { season: 'winter' });
+
+      expect(results.some((r) => r.id === noDate.id)).toBe(false);
+    });
+
+    it('returns all anime when no season/year filters are given', async () => {
+      const userId = await createTestUser();
+      const anime = await createTestAnime({ tmdbId: 99991, firstAirDate: '2024-01-01' });
+      await createTestReview({ animeId: anime.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10);
+      expect(results.some((r) => r.id === anime.id)).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // genre filter
+  // -------------------------------------------------------------------------
+
+  describe('genre filter', () => {
+    it('returns anime matching any of the given genres (OR match)', async () => {
+      const userId = await createTestUser();
+      const action = await createTestAnime({ tmdbId: 99991, title: 'Action Show', genres: ['Action & Adventure'] });
+      const comedy = await createTestAnime({ tmdbId: 99992, title: 'Comedy Show', genres: ['Comedy'] });
+      const drama  = await createTestAnime({ tmdbId: 99993, title: 'Drama Show',  genres: ['Drama'] });
+      await createTestReview({ animeId: action.id, userId, rating: 8 });
+      await createTestReview({ animeId: comedy.id, userId, rating: 8 });
+      await createTestReview({ animeId: drama.id,  userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { genres: ['Action & Adventure', 'Comedy'] });
+
+      expect(results.some((r) => r.id === action.id)).toBe(true);
+      expect(results.some((r) => r.id === comedy.id)).toBe(true);
+      expect(results.some((r) => r.id === drama.id)).toBe(false);
+    });
+
+    it('returns no results when the genre filter matches nothing', async () => {
+      const userId = await createTestUser();
+      const anime = await createTestAnime({ tmdbId: 99991, genres: ['Comedy'] });
+      await createTestReview({ animeId: anime.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, { genres: ['Horror'] });
+      expect(results.some((r) => r.id === anime.id)).toBe(false);
+    });
+
+    it('returns all anime when no genre filter is given', async () => {
+      const userId = await createTestUser();
+      const anime = await createTestAnime({ tmdbId: 99991, genres: ['Comedy'] });
+      await createTestReview({ animeId: anime.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10);
+      expect(results.some((r) => r.id === anime.id)).toBe(true);
     });
   });
 

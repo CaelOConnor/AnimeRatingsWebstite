@@ -5,6 +5,7 @@ A website that allows users to give ratings and ratings for shows by season and 
 To work in dev run: docker compose up --build
 
 To run tests cd backend then run: npm test
+docker compose exec backend npx vitest run
 
 To take down container run: docker compose down
 
