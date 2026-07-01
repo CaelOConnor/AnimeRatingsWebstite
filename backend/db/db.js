@@ -2,6 +2,10 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
+// client is one db connection
+// pool is multiple connections
+
+// gets all db settings from .env
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
   port:     parseInt(process.env.DB_PORT) || 5432,
@@ -13,7 +17,8 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-pool.on('error', (err) => {
+// if an error occurs throw this error
+pool.on('error', (err) => { 
   console.error('Unexpected DB pool error:', err);
 });
 
@@ -28,7 +33,7 @@ export async function query(text, params) {
   return res;
 }
 
-// For transactions
+// For transactions if two things are supposed to happen but only one succeds then undo the one that succeded
 export async function getClient() {
   return pool.connect();
 }
