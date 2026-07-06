@@ -12,25 +12,26 @@ import { isTokenDenylisted } from '../services/redis.js';
  */
 export async function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
+  // set token to authheader.slice otherwise null
   const token = authHeader && authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
     : null;
-
+  // if token is njull raise error
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
   }
 
   try {
-    // 1. Verify signature + expiry
+    // Verify signature + expiry
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 2. Check denylist (logged-out or banned tokens)
+    // Check denylist (logged-out or banned tokens)
     const denylisted = await isTokenDenylisted(payload.jti);
     if (denylisted) {
       return res.status(401).json({ error: 'Token has been revoked' });
     }
 
-    // 3. Attach user info to request — available in all downstream handlers
+    // Attach user info to request — available in all downstream handlers
     req.user = {
       id:       payload.sub,   // user UUID
       username: payload.username,
@@ -40,6 +41,7 @@ export async function authenticateToken(req, res, next) {
     };
 
     next();
+    // raise erros
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired' });
@@ -67,6 +69,7 @@ export async function authenticateToken(req, res, next) {
  */
 export function requireRole(...roles) {
   return (req, res, next) => {
+    // raise erros if not authenticated or not permitted otherwise proceed
     if (!req.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
