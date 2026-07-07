@@ -9,13 +9,15 @@ async function request(path, options = {}) {
 
   const headers = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...options.headers, // allows headers to be added or overrided
   };
 
+  // authorization
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // network request
   const res = await fetch(`${API}${path}`, {
     ...options,
     headers,
