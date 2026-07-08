@@ -1,0 +1,27 @@
+.tmdb-attribution {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 6px 12px;
+  background: var(--color-accent-dark);
+}
+
+.tmdb-attribution__logo {
+  height: 14px;
+  width: auto;
+}
+
+.tmdb-attribution__text {
+  margin: 0;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  text-align: center;
+}

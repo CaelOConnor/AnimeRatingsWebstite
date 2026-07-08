@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
+import TMDBAttribution from './components/layout/TMDBAttribution/TMDBAttribution';
+import './components/layout/TMDBAttribution/TMDBAttribution.css';
 
 const NO_NAVBAR = ['/register'];
 
@@ -13,7 +15,7 @@ function Layout() {
   const [sortBy, setSortBy] = useState('recent');
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
+    <div style={{ minHeight: '100vh', paddingBottom: '32px', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
       {showNavbar && (
         <Navbar
           searchQuery={searchQuery}
@@ -23,6 +25,7 @@ function Layout() {
         />
       )}
       <Outlet context={{ searchQuery, sortBy }} />
+      <TMDBAttribution />
     </div>
   );
 }
