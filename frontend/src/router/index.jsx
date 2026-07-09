@@ -12,18 +12,23 @@ import Admin        from '../pages/Admin';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute      from './RoleRoute';
 
+// Defines all of the application's routes (pages).
+// React Router uses this configuration to determine which component to display for each URL.
 export const router = createBrowserRouter([
   {
+    // The root route renders the App component, which contains
+    // the shared layout (navbar, footer, etc.) and an <Outlet> where child pages are displayed.
     path: '/',
     element: <App />,
     children: [
+      // Public routes that anyone can access.
       { index: true,           element: <Home /> },
       { path: 'register',      element: <Register /> },
-      { path: 'anime/:id',     element: <AnimeDetail /> },
+      { path: 'anime/:id',     element: <AnimeDetail /> }, // ':id' is a URL parameter. For example, '/anime/42' will set id = 42 so the page knows which anime to display.
       { path: 'reviews/:id',   element: <ReviewDetail /> },
       { path: 'users/:id',     element: <UserProfile /> },
 
-      // Auth required
+      // Auth required Routes that require the user to be logged in.
       { path: 'account',   element: <ProtectedRoute><Account /></ProtectedRoute> },
       { path: 'watchlist', element: <ProtectedRoute><Watchlist /></ProtectedRoute> },
 
