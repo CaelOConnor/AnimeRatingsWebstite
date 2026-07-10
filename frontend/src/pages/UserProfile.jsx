@@ -4,9 +4,11 @@ import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import './UserProfile.css';
 
+// Constants used throughout the profile page.
 const TMDB_POSTER  = 'https://image.tmdb.org/t/p/w500';
 const API_BASE     = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Used to group and display watchlist entries in a consistent order.
 const STATUS_ORDER  = ['watching', 'completed', 'plan_to_watch', 'dropped'];
 const STATUS_LABELS = {
   watching:      'Watching',
@@ -15,6 +17,7 @@ const STATUS_LABELS = {
   dropped:       'Dropped',
 };
 
+// Helper functions for displaying dates in a readable format.
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -29,6 +32,8 @@ function formatJoinDate(iso) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+// Displays the user's avatar image.
+// If no avatar exists, show the user's first initial instead.
 function Avatar({ avatarUrl, username, size = 'md' }) {
   if (avatarUrl) {
     const src = avatarUrl.startsWith('/uploads')
@@ -49,6 +54,7 @@ function Avatar({ avatarUrl, username, size = 'md' }) {
   );
 }
 
+// Displays a preview of one review on the user's profile.
 function ReviewCard({ review }) {
   return (
     <Link to={`/reviews/${review.id}`} className="user-profile__review-card">
@@ -68,6 +74,8 @@ function ReviewCard({ review }) {
   );
 }
 
+// Displays all watchlist entries that belong to a single status
+// (Watching, Completed, Plan to Watch, etc.).
 function WatchlistGroup({ status, entries }) {
   if (!entries.length) return null;
   return (
@@ -96,6 +104,7 @@ function WatchlistGroup({ status, entries }) {
   );
 }
 
+// Displays one of the user's highest-rated anime.
 function FavoriteCard({ review }) {
   return (
     <Link to={`/anime/${review.anime_id}`} className="user-profile__fav-card">
@@ -120,6 +129,7 @@ function FavoriteCard({ review }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function UserProfile() {
+  // Get the user ID from the URL and authentication information for the currently logged-in user.
   const { id }     = useParams();
   const navigate   = useNavigate();
   const { user: authUser } = useAuth();
@@ -128,6 +138,7 @@ export default function UserProfile() {
   const isSelf  = authUser?.id === id;
   const isAdmin = authUser?.role_type === 'admin';
 
+  // State used to store profile data and page status.
   const [user,      setUser]      = useState(null);
   const [reviews,   setReviews]   = useState([]);
   const [watchlist, setWatchlist] = useState([]);
@@ -135,20 +146,21 @@ export default function UserProfile() {
   const [error,     setError]     = useState(null);
   const [tab,       setTab]       = useState('reviews');
 
-  // Edit state
+  // State used when editing the user's bio.
   const [bio,        setBio]        = useState('');
   const [bioSaving,  setBioSaving]  = useState(false);
   const [bioError,   setBioError]   = useState(null);
   const [bioSuccess, setBioSuccess] = useState(false);
 
-  // Avatar upload state
+  // State used while uploading a new profile picture.
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError,     setAvatarError]     = useState(null);
 
-  // Admin action state
+  // State used for administrator actions.
   const [adminActing,  setAdminActing]  = useState(false);
   const [adminError,   setAdminError]   = useState(null);
 
+  // Load the user's profile, reviews, and watchlist whenever a different profile page is opened.
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -172,19 +184,20 @@ export default function UserProfile() {
     load();
   }, [id]);
 
-  // Favorites: top 10 by user's own rating, only entries that have a rating
+  // Select the user's 10 highest-rated reviews to display in the "Top Rated" section.
   const favorites = [...reviews]
     .filter((r) => r.rating != null)
     .sort((a, b) => Number(b.rating) - Number(a.rating))
     .slice(0, 10);
 
+  // Organize watchlist entries by status so they can be displayed under separate headings.
   const groupedWatchlist = STATUS_ORDER.reduce((acc, status) => {
     acc[status] = watchlist.filter((e) => e.status === status);
     return acc;
   }, {});
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-
+  // Upload a new avatar and update the profile when successful.
   async function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -206,6 +219,7 @@ export default function UserProfile() {
     }
   }
 
+  // Save changes made to the user's biography.
   async function handleBioSave() {
     setBioSaving(true);
     setBioError(null);
@@ -222,6 +236,7 @@ export default function UserProfile() {
     }
   }
 
+  // Administrator actions for managing user accounts.
   async function handleAdminBan() {
     if (!window.confirm(`Ban ${user.username}? This will immediately invalidate their session.`)) return;
     setAdminActing(true);
@@ -263,7 +278,7 @@ export default function UserProfile() {
   }
 
   // ── Render guards ────────────────────────────────────────────────────────────
-
+  // Show a loading spinner or an error message before attempting to render the profile.
   if (loading) {
     return (
       <div className="user-profile__state">
@@ -286,10 +301,11 @@ export default function UserProfile() {
   return (
     <div className="user-profile">
       <div className="user-profile__container">
-
+        {/* Return to the previous page in the browser history. */}
         <button className="user-profile__back" onClick={() => navigate(-1)}>← Back</button>
 
-        {/* Admin strip */}
+        {/* Administrator controls for banning, unbanning,
+            or deleting another user's account. */}
         {isAdmin && !isSelf && (
           <div className="user-profile__admin-strip">
             <span className="user-profile__admin-label">Admin actions</span>
@@ -324,11 +340,15 @@ export default function UserProfile() {
         )}
 
         {/* Header */}
+        {/* Profile information including avatar, username,
+            biography, and account statistics. */}
         <div className="user-profile__header">
           <div className="user-profile__avatar-wrap">
             <Avatar avatarUrl={user.avatar_url} username={user.username} size="lg" />
             {isSelf && (
               <>
+              {/* Allow users to upload a new profile picture
+                    when viewing their own profile. */}
                 <button
                   className="user-profile__avatar-edit"
                   onClick={() => fileInputRef.current?.click()}
@@ -404,7 +424,7 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Favorites */}
+        {/* Display the user's highest-rated anime. */}
         {favorites.length > 0 && (
           <section className="user-profile__favorites">
             <h2 className="user-profile__section-heading">Top Rated</h2>
@@ -417,6 +437,8 @@ export default function UserProfile() {
         )}
 
         {/* Tabs */}
+        {/* Switch between viewing the user's reviews
+            and their watchlist. */}
         <div className="user-profile__tabs" role="tablist">
           <button
             className={`user-profile__tab${tab === 'reviews' ? ' user-profile__tab--active' : ''}`}
@@ -437,6 +459,7 @@ export default function UserProfile() {
         </div>
 
         {/* Tab panels */}
+        {/* Display all written reviews. */}
         {tab === 'reviews' && (
           <div className="user-profile__panel">
             {reviews.filter(r => r.body).length === 0 ? (
@@ -451,6 +474,7 @@ export default function UserProfile() {
           </div>
         )}
 
+        {/* Display the user's watchlist grouped by status. */}
         {tab === 'watchlist' && (
           <div className="user-profile__panel">
             {watchlist.length === 0 ? (

@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import './ReviewDetail.css';
 
+// Format dates into a readable form for reviews and comments.
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -12,6 +13,7 @@ function formatDate(iso) {
   });
 }
 
+// Displays a review's rating using a star icon.
 function StarRating({ rating }) {
   return (
     <span className="review-detail__rating">
@@ -22,15 +24,19 @@ function StarRating({ rating }) {
   );
 }
 
+// Displays an individual comment.
+// Users can edit their own comments, while moderators and administrators can delete any comment.
 function CommentItem({ comment, currentUser, onEdit, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [saving, setSaving] = useState(false);
 
+  // Determine whether the current user is allowed to edit or moderate this comment.
   const isOwner = currentUser?.id === comment.user_id;
   const isMod =
     currentUser?.role_type === 'moderator' || currentUser?.role_type === 'admin';
 
+  // Save changes made while editing a comment.
   async function handleSave() {
     if (!editBody.trim()) return;
     setSaving(true);
@@ -39,6 +45,7 @@ function CommentItem({ comment, currentUser, onEdit, onDelete }) {
     setEditing(false);
   }
 
+  // Discard any edits and restore the original comment.
   function handleCancel() {
     setEditBody(comment.body);
     setEditing(false);
@@ -108,10 +115,12 @@ function CommentItem({ comment, currentUser, onEdit, onDelete }) {
   );
 }
 
+// Get the review ID from the URL and the currently logged-in user's information.
 export default function ReviewDetail() {
   const { id } = useParams();
   const { user } = useAuth();
 
+  // Store the review, related anime, comments, and the page's loading state.
   const [review, setReview] = useState(null);
   const [anime, setAnime] = useState(null);
   const [comments, setComments] = useState([]);
@@ -124,6 +133,7 @@ export default function ReviewDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
+  // Load the review, anime information, and comments whenever a different review page is opened.
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -147,6 +157,7 @@ export default function ReviewDetail() {
     load();
   }, [id]);
 
+  // Create a new comment and add it to the page without requiring a full reload.
   async function handleSubmitComment() {
     if (!commentBody.trim()) return;
     setSubmitting(true);
@@ -156,7 +167,7 @@ export default function ReviewDetail() {
         reviewId: id,
         body: commentBody.trim(),
       });
-      // created comes back without username — patch it in from current user
+      // The API response does not include the author's username, so add it locally before displaying the new comment.
       setComments((prev) => [...prev, { ...created, username: user.username }]);
       setCommentBody('');
       setComposing(false);
@@ -167,6 +178,7 @@ export default function ReviewDetail() {
     }
   }
 
+  // Update an existing comment.
   async function handleEditComment(commentId, body) {
     const updated = await api.patch(`/api/comments/${commentId}`, { body });
     setComments((prev) =>
@@ -174,11 +186,13 @@ export default function ReviewDetail() {
     );
   }
 
+  // Remove a comment from both the database and the page.
   async function handleDeleteComment(commentId) {
     await api.delete(`/api/comments/${commentId}`);
     setComments((prev) => prev.filter((c) => c.id !== commentId));
   }
 
+  // Show a loading spinner or an error message before rendering the review.
   if (loading) {
     return (
       <div className="review-detail__state">
@@ -211,6 +225,7 @@ export default function ReviewDetail() {
         </Link>
 
         {/* Review card */}
+        {/* Display the selected review and its details. */}
         <article className="review-detail__card">
           <div className="review-detail__card-header">
             <div className="review-detail__meta">
@@ -260,6 +275,8 @@ export default function ReviewDetail() {
                   disabled={reported}
                   onClick={async () => {
                     try {
+                      {/* Allow users to report another user's review.
+                        Users cannot report their own reviews. */}
                       await api.post('/api/reports', {
                         targetType: 'review',
                         targetId: review.id,
@@ -279,6 +296,8 @@ export default function ReviewDetail() {
         </article>
 
         {/* Comments section */}
+        {/* Display existing comments and allow users
+            to add new ones. */}
         <section className="review-detail__comments">
           <h2 className="review-detail__comments-heading">
             Comments

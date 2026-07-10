@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import './Watchlist.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'; // might be able to remove this line
 
+// watchlist tabs
 const TABS = [
   { key: 'watching',      label: 'Watching' },
   { key: 'plan_to_watch', label: 'Plan to Watch' },
@@ -12,6 +13,7 @@ const TABS = [
   { key: 'dropped',       label: 'Dropped' },
 ];
 
+// drop down options for watchlist
 const STATUS_OPTIONS = [
   { value: 'watching',      label: 'Watching' },
   { value: 'plan_to_watch', label: 'Plan to Watch' },
@@ -19,6 +21,8 @@ const STATUS_OPTIONS = [
   { value: 'dropped',       label: 'Dropped' },
 ];
 
+// Select the first tab that actually contains entries.
+// If the watchlist is empty, default to the watching tab.
 function getDefaultTab(entries) {
   for (const tab of TABS) {
     if (entries.some((e) => e.status === tab.key)) return tab.key;
@@ -27,11 +31,13 @@ function getDefaultTab(entries) {
 }
 
 export default function Watchlist() {
+  // Store the watchlist data and page state.
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('watching');
 
+  // Load the user's watchlist when the page is opened.
   useEffect(() => {
     api.get('/api/watchlist')
       .then((data) => {
@@ -42,6 +48,8 @@ export default function Watchlist() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Update an anime's status both locally and in the database.
+  // If the API request fails, restore the previous data.
   function handleStatusChange(animeId, newStatus) {
     const previous = entries;
     setEntries((prev) =>
@@ -51,6 +59,8 @@ export default function Watchlist() {
       .catch(() => setEntries(previous));
   }
 
+  // Remove an anime from the watchlist.
+  // If the API request fails, add it back.
   function handleRemove(animeId) {
     const previous = entries;
     setEntries((prev) => prev.filter((e) => e.anime_id !== animeId));
@@ -58,9 +68,11 @@ export default function Watchlist() {
       .catch(() => setEntries(previous));
   }
 
+  // Display only the entries that belong to the selected tab.
   const tabEntries = entries.filter((e) => e.status === activeTab);
   const totalCount = entries.length;
 
+  // Display loading or error messages while waiting for data.
   if (loading) return <div className="watchlist__loading">Loading your watchlist…</div>;
   if (error)   return <div className="watchlist__error">{error}</div>;
 
@@ -73,6 +85,8 @@ export default function Watchlist() {
         )}
       </div>
 
+      {/* Display a tab for each watchlist category and show
+          how many anime belong to that category. */}
       <div className="watchlist__tabs" role="tablist">
         {TABS.map((tab) => {
           const count = entries.filter((e) => e.status === tab.key).length;
@@ -90,7 +104,9 @@ export default function Watchlist() {
           );
         })}
       </div>
-
+      
+      {/* Show either an empty-state message or the list of anime
+          that belong to the currently selected tab. */}
       <div className="watchlist__list" role="tabpanel">
         {tabEntries.length === 0 ? (
           <div className="watchlist__empty">
@@ -105,6 +121,8 @@ export default function Watchlist() {
 
             return (
               <div key={entry.id} className="watchlist-card">
+                {/* Clicking the poster or title navigates
+                    to the anime's details page. */}
                 <Link to={`/anime/${entry.anime_id}`} className="watchlist-card__poster-wrap">
                   {posterUrl
                     ? <img src={posterUrl} alt={entry.title} className="watchlist-card__poster" loading="lazy" />
@@ -122,7 +140,9 @@ export default function Watchlist() {
                     })}
                   </p>
                 </div>
-
+                
+                {/* Allow the user to change the watchlist status
+                    or remove the anime completely. */}
                 <div className="watchlist-card__actions">
                   <select
                     className="watchlist-card__status-select"
