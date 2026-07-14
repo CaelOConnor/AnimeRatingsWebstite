@@ -296,8 +296,7 @@ export default function ReviewDetail() {
         </article>
 
         {/* Comments section */}
-        {/* Display existing comments and allow users
-            to add new ones. */}
+        {/* Display existing comments and allow users to add new ones. */}
         <section className="review-detail__comments">
           <h2 className="review-detail__comments-heading">
             Comments

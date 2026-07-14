@@ -6,15 +6,18 @@ import './LoginModal.css';
 export default function LoginModal({ isOpen, onClose }) {
   const { login } = useAuth();
 
+  // Store the login form values and current page state.
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
 
+  // References used to focus the first input and detect clicks outside the modal.
   const identifierRef = useRef(null);
   const overlayRef    = useRef(null);
 
-  // Auto-focus identifier on open; reset form on close
+  // Focus the username field whenever the modal opens.
+  // Reset the form when the modal closes.
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => identifierRef.current?.focus(), 60);
@@ -26,7 +29,7 @@ export default function LoginModal({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  // Close on Escape
+  // Allow the user to close the modal by pressing Escape.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -34,18 +37,21 @@ export default function LoginModal({ isOpen, onClose }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  // Lock body scroll while open
+  // Prevent the page behind the modal from scrolling while the modal is open.
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  // Don't render anything while the modal is closed.
   if (!isOpen) return null;
 
+  // Close the modal if the user clicks outside of the dialog box.
   const handleOverlayClick = (e) => {
     if (e.target === overlayRef.current) onClose();
   };
 
+  // Attempt to log the user in when the form is submitted.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -68,7 +74,8 @@ export default function LoginModal({ isOpen, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-label="Log in"
-    >
+    > 
+      {/* Login dialog */}
       <div className="login-modal">
 
         <div className="login-modal__header">
@@ -83,6 +90,7 @@ export default function LoginModal({ isOpen, onClose }) {
           </svg>
         </button>
 
+        {/* Login form */}
         <form onSubmit={handleSubmit} className="login-modal__form" noValidate>
           <div className="login-modal__field">
             <label className="login-modal__label" htmlFor="login-identifier">
@@ -128,7 +136,8 @@ export default function LoginModal({ isOpen, onClose }) {
             {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>
-
+        
+        {/* Link to the registration page for new users. */}
         <p className="login-modal__footer">
           Don't have an account?{' '}
           <Link to="/register" className="login-modal__footer-link" onClick={onClose}>

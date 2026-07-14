@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { SEASONS, GENRES } from '../../constants/animeFilters';
 import './FilterBar.css';
 
+// Display names for each season shown in the dropdown.
 const SEASON_LABELS = {
   winter: 'Winter',
   spring: 'Spring',
@@ -9,6 +10,7 @@ const SEASON_LABELS = {
   fall: 'Fall',
 };
 
+// Generate a list of years for the year filter.
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR + 1 - i);
 
@@ -16,9 +18,14 @@ export default function FilterBar({
   season, year, genres,
   onSeasonChange, onYearChange, onGenresChange, onClear,
 }) {
+
+  // Track whether the genre dropdown is currently open.
   const [genreOpen, setGenreOpen] = useState(false);
+
+  // Reference to the genre menu so it can be closed when the user clicks outside of it.
   const genreRef = useRef(null);
 
+  // Close the genre menu whenever the user clicks anywhere outside of the dropdown.
   useEffect(() => {
     function handleClickOutside(e) {
       if (genreRef.current && !genreRef.current.contains(e.target)) {
@@ -29,6 +36,7 @@ export default function FilterBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Add or remove a genre from the selected filters.
   function toggleGenre(g) {
     if (genres.includes(g)) {
       onGenresChange(genres.filter((x) => x !== g));
@@ -37,10 +45,12 @@ export default function FilterBar({
     }
   }
 
+  // Determine whether any filters are currently active.
   const hasActiveFilters = Boolean(season) || Boolean(year) || genres.length > 0;
 
   return (
     <div className="filter-bar">
+      {/* Season filter */}
       <select
         className="filter-bar__select"
         value={season ?? ''}
@@ -51,7 +61,8 @@ export default function FilterBar({
           <option key={s} value={s}>{SEASON_LABELS[s]}</option>
         ))}
       </select>
-
+      
+      {/* Year filter */}
       <select
         className="filter-bar__select"
         value={year ?? ''}
@@ -62,7 +73,8 @@ export default function FilterBar({
           <option key={y} value={y}>{y}</option>
         ))}
       </select>
-
+      
+      {/* Genre filter with support for selecting multiple genres. */}
       <div className="filter-bar__genre" ref={genreRef}>
         <button
           type="button"
@@ -87,7 +99,8 @@ export default function FilterBar({
           </div>
         )}
       </div>
-
+      
+      {/* Display the clear button only when at least one filter has been selected. */}
       {hasActiveFilters && (
         <button type="button" className="filter-bar__clear" onClick={onClear}>
           Clear filters

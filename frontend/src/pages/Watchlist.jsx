@@ -85,8 +85,7 @@ export default function Watchlist() {
         )}
       </div>
 
-      {/* Display a tab for each watchlist category and show
-          how many anime belong to that category. */}
+      {/* Display a tab for each watchlist category and show how many anime belong to that category. */}
       <div className="watchlist__tabs" role="tablist">
         {TABS.map((tab) => {
           const count = entries.filter((e) => e.status === tab.key).length;
@@ -105,8 +104,7 @@ export default function Watchlist() {
         })}
       </div>
       
-      {/* Show either an empty-state message or the list of anime
-          that belong to the currently selected tab. */}
+      {/* Show either an empty-state message or the list of anime that belong to the currently selected tab. */}
       <div className="watchlist__list" role="tabpanel">
         {tabEntries.length === 0 ? (
           <div className="watchlist__empty">
@@ -121,8 +119,7 @@ export default function Watchlist() {
 
             return (
               <div key={entry.id} className="watchlist-card">
-                {/* Clicking the poster or title navigates
-                    to the anime's details page. */}
+                {/* Clicking the poster or title navigates to the anime's details page. */}
                 <Link to={`/anime/${entry.anime_id}`} className="watchlist-card__poster-wrap">
                   {posterUrl
                     ? <img src={posterUrl} alt={entry.title} className="watchlist-card__poster" loading="lazy" />
@@ -141,8 +138,7 @@ export default function Watchlist() {
                   </p>
                 </div>
                 
-                {/* Allow the user to change the watchlist status
-                    or remove the anime completely. */}
+                {/* Allow the user to change the watchlist status or remove the anime completely. */}
                 <div className="watchlist-card__actions">
                   <select
                     className="watchlist-card__status-select"

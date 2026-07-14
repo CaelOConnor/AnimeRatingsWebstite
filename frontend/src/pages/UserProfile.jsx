@@ -304,8 +304,7 @@ export default function UserProfile() {
         {/* Return to the previous page in the browser history. */}
         <button className="user-profile__back" onClick={() => navigate(-1)}>← Back</button>
 
-        {/* Administrator controls for banning, unbanning,
-            or deleting another user's account. */}
+        {/* Administrator controls for banning, unbanning, or deleting another user's account. */}
         {isAdmin && !isSelf && (
           <div className="user-profile__admin-strip">
             <span className="user-profile__admin-label">Admin actions</span>
@@ -340,15 +339,13 @@ export default function UserProfile() {
         )}
 
         {/* Header */}
-        {/* Profile information including avatar, username,
-            biography, and account statistics. */}
+        {/* Profile information including avatar, username, biography, and account statistics. */}
         <div className="user-profile__header">
           <div className="user-profile__avatar-wrap">
             <Avatar avatarUrl={user.avatar_url} username={user.username} size="lg" />
             {isSelf && (
               <>
-              {/* Allow users to upload a new profile picture
-                    when viewing their own profile. */}
+              {/* Allow users to upload a new profile picture when viewing their own profile. */}
                 <button
                   className="user-profile__avatar-edit"
                   onClick={() => fileInputRef.current?.click()}
@@ -437,8 +434,7 @@ export default function UserProfile() {
         )}
 
         {/* Tabs */}
-        {/* Switch between viewing the user's reviews
-            and their watchlist. */}
+        {/* Switch between viewing the user's reviews and their watchlist. */}
         <div className="user-profile__tabs" role="tablist">
           <button
             className={`user-profile__tab${tab === 'reviews' ? ' user-profile__tab--active' : ''}`}

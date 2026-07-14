@@ -81,8 +81,7 @@ export default function Reports() {
         <h1 className="reports__title">Reports</h1>
         <span className="reports__count">{reports.length} pending</span>
       </div>
-      {/* Display either an empty message or a table of
-          all pending reports. */}
+      {/* Display either an empty message or a table of all pending reports. */}
       {reports.length === 0 ? (
         <p className="reports__empty">No pending reports.</p>
       ) : (
@@ -110,8 +109,7 @@ export default function Reports() {
                     <span className="reports__badge reports__badge--banned">Banned</span>
                   )}
                 </td>
-                {/* Link to the content that was reported so
-                    moderators can review it before taking action. */}
+                {/* Link to the content that was reported so moderators can review it before taking action. */}
                 <td className="reports__count-cell">{row.report_count}</td>
                 <td className="reports__link-cell">
                   {row.latest_target_type === 'review' && (

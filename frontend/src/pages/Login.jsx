@@ -46,8 +46,7 @@ export default function Login() {
 
       {error && <p className="auth-error">{error}</p>}
 
-      {/* Handle login using React instead of allowing
-          the browser to submit the form normally. */}
+      {/* Handle login using React instead of allowing the browser to submit the form normally. */}
       <form onSubmit={handleSubmit} className="auth-form">
         <label htmlFor="email">Email</label>
         <input

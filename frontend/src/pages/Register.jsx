@@ -61,8 +61,7 @@ export default function Register() {
 
           {error && <p className="register-error">{error}</p>}
 
-          {/* Form submission is handled by React instead of
-              allowing the browser to reload the page. */}
+          {/* Form submission is handled by React instead of allowing the browser to reload the page. */}
           <form onSubmit={handleSubmit} className="register-form">
             <div className="register-form__field">
               <label className="register-form__label" htmlFor="username">Username</label>

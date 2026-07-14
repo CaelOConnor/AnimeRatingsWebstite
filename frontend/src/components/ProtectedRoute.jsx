@@ -20,13 +20,16 @@ export function ProtectedRoute({ children, role }) {
   // Don't redirect while we're still checking the stored token
   if (loading) return null;
 
+  // If the user is not logged in, send them to the login page and remember the page they wanted.
   if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // If this route requires a specific role, only allow users with that role (or administrators) to continue.
   if (role && user?.role_type !== role && user?.role_type !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
+  // User passed all checks, so render the protected page.
   return children;
 }

@@ -4,15 +4,21 @@ import './AnimeCard.css';
 // Expects anime shape:
 // { id, title, cover_image_url, average_rating, genres: ['Action', 'Drama', ...] }
 
+// Display a single anime preview card in the anime grid.
 export default function AnimeCard({ anime }) {
+  // Extract the information needed to display this anime.
   const { id, title, poster_path, average_rating, genres = [] } = anime;
+
+  // Build the full image URL if a poster exists.
   const cover_image_url = poster_path ? `https://image.tmdb.org/t/p/w500${poster_path}` : null;
 
+  // Convert the 10-point rating into a 5-star rating and limit the displayed genres to two.
   const stars = Math.round((average_rating ?? 0) / 2);
   const displayGenres = genres.slice(0, 2);
 
   return (
     <Link to={`/anime/${id}`} className="anime-card">
+      {/* Display the anime poster, or a placeholder if no image is available. */}
       <div className="anime-card__image-wrap">
         {cover_image_url
           ? <img src={cover_image_url} alt={title} className="anime-card__image" loading="lazy" />
@@ -34,7 +40,8 @@ export default function AnimeCard({ anime }) {
 
       <div className="anime-card__info">
         <p className="anime-card__title">{title}</p>
-
+        
+        {/* Display a visual star rating out of five. */}
         <div className="anime-card__star-row" aria-label={`${stars} out of 5 stars`}>
           {[1, 2, 3, 4, 5].map((n) => (
             <svg key={n} width="11" height="11" viewBox="0 0 24 24"
@@ -45,6 +52,7 @@ export default function AnimeCard({ anime }) {
           ))}
         </div>
 
+        {/* Display up to two genre tags. */}
         {displayGenres.length > 0 && (
           <div className="anime-card__tag-row">
             {displayGenres.map((g) => (

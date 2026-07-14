@@ -5,7 +5,7 @@ import LoginModal from './LoginModal';
 import './Navbar.css';
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
-
+// Display the application's logo and link back to the home page.
 function Logo() {
   return (
     <Link to="/" className="navbar__logo">
@@ -15,6 +15,7 @@ function Logo() {
   );
 }
 
+// Display a button that returns the user to the home page.
 function HomeButton() {
   return (
     <Link to="/" className="navbar__btn navbar__btn--ghost">
@@ -27,15 +28,21 @@ function HomeButton() {
   );
 }
 
+// Available ways to sort the anime list.
 const SORT_OPTIONS = [
   { value: 'recent',    label: 'Recently Added' },
   { value: 'top_rated', label: 'Top Rated' },
 ];
 
+// Search bar and sorting controls used on the home page.
 function SearchSort({ placeholder, searchQuery, setSearchQuery, sortBy, setSortBy }) {
+  // Track whether the sort dropdown is open.
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Reference to the dropdown so clicks outside of it can automatically close the menu.
   const dropdownRef = useRef(null);
 
+  // Close the dropdown when the user clicks anywhere outside of the menu.
   useEffect(() => {
     if (!dropdownOpen) return;
     function handleClickOutside(e) {
@@ -47,6 +54,7 @@ function SearchSort({ placeholder, searchQuery, setSearchQuery, sortBy, setSortB
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
 
+  // Display the label of the currently selected sort option.
   const activeSortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? 'Sort';
 
   return (
@@ -110,7 +118,9 @@ function SearchSort({ placeholder, searchQuery, setSearchQuery, sortBy, setSortB
   );
 }
 
+// Display account-related navigation for logged-in users.
 function AccountButton({ user, onLogout }) {
+  // Administrators have access to additional navigation links.
   const isAdmin = user.role_type === 'admin';
 
   return (
@@ -139,16 +149,20 @@ function AccountButton({ user, onLogout }) {
 }
 
 // ─── Navbar ──────────────────────────────────────────────────────────────────
-
+// Main navigation bar displayed across most pages.
 export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy }) {
+  // Get the current user and information about the current page.
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+
+  // Control whether the login modal is visible.
   const [loginOpen, setLoginOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isHome    = pathname === '/';
   const isReports = pathname === '/reports';
 
+  // Automatically open the login modal if the URL contains ?login=true.
   useEffect(() => {
     if (searchParams.get('login') === 'true') {
       setLoginOpen(true);
@@ -156,8 +170,10 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
     }
   }, [searchParams]);
 
+  // Build the three sections of the navigation bar based on the current page and login status.
   const left = isHome ? <Logo /> : <HomeButton />;
 
+  // Show the search bar only on pages where searching is available.
   const center = isHome ? (
     <SearchSort
       placeholder="Search titles…"
@@ -176,6 +192,7 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
     />
   ) : null;
 
+  // Show account controls for logged-in users, otherwise display the login and sign-up buttons.
   const right = user
     ? <AccountButton user={user} onLogout={logout} />
     : (
@@ -187,6 +204,7 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
 
   return (
     <>
+    {/* Main navigation bar displayed at the top of the page. */}
       <header className="navbar">
         <div className="navbar__inner">
           <div className="navbar__left">  {left}   </div>
@@ -194,7 +212,8 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
           <div className="navbar__right"> {right}  </div>
         </div>
       </header>
-
+      
+      {/* Login dialog displayed when requested. */}
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );

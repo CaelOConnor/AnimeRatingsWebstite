@@ -7,6 +7,7 @@ import './AnimeDetail.css';
 const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280';
 
+// Available watchlist statuses shown in the dropdown menu.
 const WATCHLIST_OPTIONS = [
   { value: 'plan_to_watch', label: 'Plan to Watch' },
   { value: 'watching',      label: 'Watching' },
@@ -14,7 +15,9 @@ const WATCHLIST_OPTIONS = [
   { value: 'dropped',       label: 'Dropped' },
 ];
 
+// Display a 10-point rating as a 5-star visual.
 function StarRating({ value }) {
+  // Convert the 10-point rating into a 5-star scale.
   const starsOutOf5 = value / 2;
   const fullStars = Math.floor(starsOutOf5);
   const hasHalfStar = starsOutOf5 - fullStars >= 0.25 && starsOutOf5 - fullStars < 0.75;
@@ -37,15 +40,17 @@ function StarRating({ value }) {
 }
 
 export default function AnimeDetail() {
+  // Get the anime ID from the URL and the current user's authentication information.
   const { id } = useParams();
   const { isLoggedIn, user } = useAuth();
 
+  // Store the anime, its reviews, and the page state.
   const [anime, setAnime]           = useState(null);
   const [reviews, setReviews]       = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
 
-  // action bar state
+  // State used for the watchlist, rating, and review action buttons.
   const [watchStatus, setWatchStatus]       = useState('');
   const [watchSaving, setWatchSaving]       = useState(false);
   const [watchError, setWatchError]         = useState(null);
@@ -54,21 +59,23 @@ export default function AnimeDetail() {
   const [userReview, setUserReview]           = useState(null);
   const [reportedReviews, setReportedReviews] = useState(new Set());
 
-  // quick rating form
+  // State used by the quick rating form.
   const [quickRating, setQuickRating]             = useState('');
   const [quickRatingError, setQuickRatingError]   = useState(null);
   const [quickRatingSaving, setQuickRatingSaving] = useState(false);
 
-  // review form state
+  // State used while creating or editing a written review.
   const [reviewRating, setReviewRating] = useState('');
   const [reviewTitle, setReviewTitle]   = useState('');
   const [reviewBody, setReviewBody]     = useState('');
   const [reviewError, setReviewError]   = useState(null);
   const [reviewSaving, setReviewSaving] = useState(false);
 
+  // Load the anime details, reviews, and the current user's watchlist information whenever a new anime is opened.
   useEffect(() => {
     async function load() {
       try {
+        // Request all required data at the same time to reduce the page's loading time.
         const [animeData, reviewData, watchlistData] = await Promise.all([
           api.get(`/api/anime/${id}`),
           api.get(`/api/reviews?animeId=${id}`),
@@ -93,6 +100,7 @@ export default function AnimeDetail() {
     load();
   }, [id, user]);
 
+  // Add the anime to the user's watchlist or update its existing watchlist status.
   async function handleWatchlistChange(e) {
     const status = e.target.value;
     setWatchError(null);
@@ -113,6 +121,7 @@ export default function AnimeDetail() {
     }
   }
 
+  // Save a rating without requiring the user to write a full review.
   async function handleQuickRatingSubmit() {
     setQuickRatingError(null);
     const r = Number(quickRating);
@@ -141,6 +150,7 @@ export default function AnimeDetail() {
     }
   }
 
+  // Create a new review or update the user's existing review.
   async function handleReviewSubmit() {
     setReviewError(null);
     if (!reviewRating || reviewRating < 1 || reviewRating > 10) {
@@ -180,6 +190,7 @@ export default function AnimeDetail() {
     }
   }
 
+  // Report another user's review for moderation.
   async function handleReport(review) {
     try {
       await api.post('/api/reports', {
@@ -193,22 +204,26 @@ export default function AnimeDetail() {
     }
   }
 
+  // Show loading or error messages before rendering the anime details.
   if (loading) return <div className="anime-detail__loading">Loading…</div>;
   if (error)   return <div className="anime-detail__error">{error}</div>;
   if (!anime)  return null;
 
+  // Only display reviews that contain written text.
   const writtenReviews = reviews.filter(r => r.body && r.body.trim() !== '');
 
+  // Calculate the average review score.
   const averageRating = reviews.length
     ? (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length).toFixed(2)
     : null;
 
+  // Extract the release year from the air date.
   const year = anime.first_air_date ? new Date(anime.first_air_date).getFullYear() : null;
 
   return (
     <div className="anime-detail">
 
-      {/* ── Backdrop ── */}
+      {/* Display the anime's backdrop image behind the page header. */}
       {anime.backdrop_path && (
         <div
           className="anime-detail__backdrop"
@@ -218,7 +233,7 @@ export default function AnimeDetail() {
         </div>
       )}
 
-      {/* ── Hero ── */}
+      {/* Main anime information including the poster, genres, synopsis, and average rating. */}
       <div className="anime-detail__hero">
         <div className="anime-detail__poster-wrap">
           {anime.poster_path
@@ -285,7 +300,7 @@ export default function AnimeDetail() {
         </div>
       </div>
 
-      {/* ── Action bar ── */}
+      {/* Logged-in users can rate, review, and add the anime to their watchlist. */}
       {isLoggedIn && (
         <div className="anime-detail__actions">
           <button
@@ -316,6 +331,7 @@ export default function AnimeDetail() {
           {watchError && <p className="anime-detail__form-error">{watchError}</p>}
         </div>
         )}
+        {/* Simple form for quickly assigning a rating without writing a review. */}
         {isLoggedIn && showRatingForm && (
         <div className="anime-detail__rating-panel">
           <label className="anime-detail__rating-panel-label">
@@ -342,7 +358,7 @@ export default function AnimeDetail() {
         </div>
       )}
 
-      {/* ── Review form ── */}
+      {/* Form used to write or edit a full review. */}
       {isLoggedIn && showReviewForm && (
         <div className="anime-detail__review-form">
           <h3 className="anime-detail__review-form-title">Your Review</h3>
@@ -398,7 +414,7 @@ export default function AnimeDetail() {
         </div>
       )}
 
-      {/* ── Reviews list ── */}
+      {/* Display all written reviews for this anime. */}
       <div className="anime-detail__reviews">
         <h2 className="anime-detail__reviews-heading">
           Reviews
@@ -411,6 +427,7 @@ export default function AnimeDetail() {
           </div>
         ) : (
           <div className="anime-detail__reviews-list">
+            {/* Render each review individually. */}
             {writtenReviews.map(review => (
               <div key={review.id} className="anime-detail__review-card">
                 <div className="anime-detail__review-header">
@@ -444,6 +461,7 @@ export default function AnimeDetail() {
                     >
                       💬 Comments
                     </Link>
+                    {/* Allow users to report reviews written by other users. */}
                     {isLoggedIn && review.user_id !== user.id && (
                       <button
                         className="anime-detail__review-btn anime-detail__review-btn--report"

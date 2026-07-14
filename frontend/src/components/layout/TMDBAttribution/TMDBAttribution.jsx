@@ -1,3 +1,4 @@
+// Display the required TMDB attribution shown throughout the site.
 export default function TMDBAttribution() {
   return (
     <div className="tmdb-attribution">
