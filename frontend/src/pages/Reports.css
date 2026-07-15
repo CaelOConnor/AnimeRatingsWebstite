@@ -30,7 +30,7 @@
 }
 
 .reports__error {
-  color: #B3261E;
+  color: var(--color-danger);
 }
 
 .reports__table {
@@ -79,8 +79,8 @@
 }
 
 .reports__badge--banned {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }
 
 .reports__count-cell {
@@ -123,8 +123,8 @@
 }
 
 .reports__btn--ban {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }
 
 .reports__btn--ban:hover:not(:disabled) {

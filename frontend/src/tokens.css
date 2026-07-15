@@ -36,12 +36,12 @@
   --color-text-on-accent:  #FFFFFF;
 
   /* ── Semantic ── */
-  --color-danger:          #D94F4F;
-  --color-danger-light:    #FFF0F0;
-  --color-success:         #3DA06E;
-  --color-success-light:   #EDFAF3;
-  --color-warning:         #C98A2A;
-  --color-warning-light:   #FFF8EC;
+  --color-danger:          #B3261E;
+  --color-danger-light:    #FDECEC;
+  --color-success:         #1E7A34;
+  --color-success-light:   #E6F4EA;
+  --color-warning:         #92600A;
+  --color-warning-light:   #FCEFD9;
 
   /* ── Shape ── */
   --radius-sm:   6px;

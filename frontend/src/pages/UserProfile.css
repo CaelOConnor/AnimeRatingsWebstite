@@ -21,7 +21,7 @@
 }
 
 .user-profile__state--error {
-  color: #B3261E;
+  color: var(--color-danger);
 }
 
 .user-profile__spinner {
@@ -54,7 +54,7 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  background: #FCEFD9;
+  background: var(--color-warning-light);
   border: 1px solid #F0D9B5;
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
@@ -64,14 +64,14 @@
 .user-profile__admin-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #92600A;
+  color: var(--color-warning);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .user-profile__admin-error {
   font-size: 0.85rem;
-  color: #B3261E;
+  color: var(--color-danger);
 }
 
 .user-profile__admin-actions {
@@ -93,22 +93,22 @@
 .user-profile__admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .user-profile__admin-btn--ban {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }
 
 .user-profile__admin-btn--ban:hover:not(:disabled) { background: #f5c6c6; }
 
 .user-profile__admin-btn--unban {
-  background: #E6F4EA;
-  color: #1E7A34;
+  background: var(--color-success-light); 
+  color: var(--color-success);
 }
 
 .user-profile__admin-btn--unban:hover:not(:disabled) { background: #c8e8cf; }
 
 .user-profile__admin-btn--delete {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }
 
 .user-profile__admin-btn--delete:hover:not(:disabled) { background: #f5c6c6; }
@@ -183,7 +183,7 @@
   top: calc(100% + 4px);
   left: 0;
   font-size: 0.75rem;
-  color: #B3261E;
+  color: var(--color-danger);
   white-space: nowrap;
 }
 
@@ -210,8 +210,8 @@
 .user-profile__banned-badge {
   font-size: 0.72rem;
   font-weight: 700;
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   text-transform: uppercase;
@@ -285,8 +285,8 @@
 .user-profile__bio-save:hover:not(:disabled) { background: var(--color-accent-dark); }
 .user-profile__bio-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.user-profile__bio-error   { font-size: 0.82rem; color: #B3261E; margin: 0; }
-.user-profile__bio-success { font-size: 0.82rem; color: #1E7A34; margin: 0; }
+.user-profile__bio-error   { font-size: 0.82rem; color: var(--color-danger); margin: 0; }
+.user-profile__bio-success { font-size: 0.82rem; color: var(--color-success); margin: 0; }
 
 /* ── Stats ───────────────────────────────────────────────────────────────── */
 .user-profile__stats {

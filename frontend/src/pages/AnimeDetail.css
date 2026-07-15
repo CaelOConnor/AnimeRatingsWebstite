@@ -42,7 +42,7 @@
 }
 
 .anime-detail__error {
-  color: var(--color-error, #c0392b);
+  color: var(--color-danger);
 }
 
 /* ── Hero ── */
@@ -396,7 +396,7 @@
 
 .anime-detail__form-error {
   font-size: 0.875rem;
-  color: var(--color-error, #c0392b);
+  color: var(--color-danger);
   margin: 0 0 0.75rem;
 }
 

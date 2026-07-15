@@ -72,8 +72,8 @@
 }
 
 .admin__error {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
   border-radius: var(--radius-md);
   padding: 10px 14px;
   font-size: 14px;
@@ -88,7 +88,7 @@
 }
 
 .admin__state--error {
-  color: #B3261E;
+  color: var(--color-danger);
 }
 
 .admin__table-wrap {
@@ -147,13 +147,13 @@
 }
 
 .admin__status--active {
-  background: #E6F4EA;
-  color: #1E7A34;
+  background: var(--color-success-light); 
+  color: var(--color-success);
 }
 
 .admin__status--banned {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }
 
 .admin__actions {
@@ -188,11 +188,11 @@
 }
 
 .admin__btn--warning {
-  background: #FCEFD9;
-  color: #92600A;
+  background: var(--color-warning-light); 
+  color: var(--color-warning);
 }
 
 .admin__btn--danger {
-  background: #FDECEC;
-  color: #B3261E;
+  background: var(--color-danger-light); 
+  color: var(--color-danger);
 }

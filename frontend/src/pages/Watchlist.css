@@ -113,11 +113,7 @@
   padding: 4rem 1.5rem;
   text-align: center;
   font-size: 1rem;
-  color: var(--color-text-secondary);
-}
-
-.watchlist__error {
-  color: #B3261E;
+  color: var(--color-danger);
 }
 
 /* ── Card ────────────────────────────────────────────────────────────────────── */
@@ -245,7 +241,7 @@
 }
 
 .watchlist-card__remove:hover {
-  color: #B3261E;
-  border-color: #B3261E;
-  background: #FDECEC;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  background: var(--color-danger-light);
 }

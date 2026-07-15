@@ -255,7 +255,7 @@
 }
 
 .review-detail__action-btn--danger:hover {
-  color: #e53e3e;
+  color: var(--color-danger);
 }
 
 /* ── Comment edit form ─────────────────────────────────────────────────────── */
@@ -286,7 +286,7 @@
 
 .review-detail__compose-error {
   font-size: 0.8rem;
-  color: #e53e3e;
+  color: var(--color-danger);
   margin: 0;
 }
 
@@ -370,7 +370,7 @@
 }
 
 .review-detail__state--error {
-  color: #e53e3e;
+  color: var(--color-danger);
 }
 
 .review-detail__spinner {
