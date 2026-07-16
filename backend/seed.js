@@ -94,7 +94,12 @@ const TV_IDS = [
   76009,  // That Time I Got Reincarnated as a Slime S2
   71712,  // The Rising of the Shield Hero S2
   154977, // Zom 100
-  82684,  // Demon Slayer: Mugen Train Arc
+  82684,  // Demon Slayer: Mugen Train Arc  
+  42916,  // Toradora!
+  85991,  // Fruits Basket (2019)
+  65249,  // Erased
+  43865,  // Psycho-Pass
+  42671,  // Elfen Lied
 ];
 
 function delay(ms) {
