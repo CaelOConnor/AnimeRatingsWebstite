@@ -19,10 +19,8 @@ const VALID_SEASONS = new Set(['winter', 'spring', 'summer', 'fall']);
 // Merged union of TMDB tv + movie genre sets. Anime entries typically only
 // use a subset of these, but both fetch paths can write any of them.
 const VALID_GENRES = new Set([
-  'Action & Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
-  'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Kids', 'Music',
-  'Mystery', 'News', 'Reality', 'Romance', 'Sci-Fi & Fantasy',
-  'Science Fiction', 'Soap', 'Talk', 'Thriller', 'War', 'War & Politics',
+  'Action & Adventure', 'Comedy', 'Crime', 'Documentary', 'Drama',
+  'Family', 'Kids', 'Mystery', 'Sci-Fi & Fantasy', 'War & Politics',
   'Western',
 ]);
 
@@ -234,7 +232,7 @@ async function fetchFromTmdb(tmdbId, tmdbType) {
       seasonCount:   null,
       status:        data.status ?? null,
       firstAirDate:  data.release_date ?? null,
-      genres:        (data.genres ?? []).map(g => g.name),
+      genres:        (data.genres ?? []).map(g => g.name).filter(g => g !== 'Animation'),
     };
   }
 
@@ -251,7 +249,7 @@ async function fetchFromTmdb(tmdbId, tmdbType) {
     seasonCount:   data.number_of_seasons ?? null,
     status:        data.status ?? null,
     firstAirDate:  data.first_air_date ?? null,
-    genres:        (data.genres ?? []).map(g => g.name),
+    genres:        (data.genres ?? []).map(g => g.name).filter(g => g !== 'Animation'),
   };
 }
 

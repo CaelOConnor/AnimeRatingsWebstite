@@ -312,7 +312,7 @@ describe('getTopRatedAnime', () => {
       const anime = await createTestAnime({ tmdbId: 99991, genres: ['Comedy'] });
       await createTestReview({ animeId: anime.id, userId, rating: 8 });
 
-      const results = await getTopRatedAnime(10, null, { genres: ['Horror'] });
+      const results = await getTopRatedAnime(10, null, { genres: ['Mystery'] });
       expect(results.some((r) => r.id === anime.id)).toBe(false);
     });
 

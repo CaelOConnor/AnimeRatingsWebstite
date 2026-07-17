@@ -5,6 +5,18 @@
  *
  * Usage:
  *   docker compose exec -e SEED_TOKEN=your_jwt backend node seed.js
+ *
+ * NOTE (2026-07-16): This list was fully rebuilt after discovering that
+ * over half of the originally-cached rows were mislabeled — the ids and
+ * comments had drifted out of sync at some point before this list ever
+ * reached this project. Every id below was individually re-verified
+ * against TMDB's own search results. See conversation history for the
+ * full audit if you need to double check any individual entry.
+ *
+ * Known gap: "Demon Slayer: Mugen Train" is a movie on TMDB, not a TV
+ * show, so it isn't included here — this script only fetches tmdbType
+ * 'tv' by default. Add movie support to fetchAnime() (pass ?type=movie)
+ * if you want to pull it in later.
  */
 
 const BASE_URL = 'http://localhost:3001';
@@ -20,86 +32,78 @@ const TV_IDS = [
   1429,   // Attack on Titan
   31911,  // Fullmetal Alchemist: Brotherhood
   13916,  // Death Note
-  85937,  // Demon Slayer
+  85937,  // Demon Slayer: Kimetsu no Yaiba
   95479,  // Jujutsu Kaisen
-  63926,  // One Punch Man
-  46260,  // My Hero Academia
+  63926,  // One-Punch Man
   37854,  // One Piece
-  11757,  // Sword Art Online
-  70881,  // Tokyo Ghoul
   30984,  // Bleach
-  46298,  // Haikyuu!!
-  44217,  // Black Clover
-  72636,  // The Rising of the Shield Hero
-  65930,  // Re:Zero
-  78804,  // That Time I Got Reincarnated as a Slime
-  76121,  // Overlord
-  40748,  // Fairy Tail
-  1530,   // Naruto
-  46261,  // Hunter x Hunter (2011)
-  33,     // Neon Genesis Evangelion
-  2047,   // Dragon Ball Z
-  12609,  // Code Geass
-  64,     // Ghost in the Shell: SAC
-  3972,   // Cowboy Bebop
-  4183,   // Fullmetal Alchemist (2003)
-  75183,  // Vinland Saga
-  90802,  // Chainsaw Man
-  114410, // Spy x Family
-  108465, // Mushoku Tensei
-  119374, // Blue Lock
-  126146, // Oshi no Ko
-  84669,  // Dr. Stone
-  85272,  // Fire Force
-  88196,  // The Promised Neverland
-  70523,  // Made in Abyss
-  67605,  // Konosuba
-  61374,  // No Game No Life
-  61175,  // Kill la Kill
-  62492,  // Your Lie in April
-  45099,  // Assassination Classroom
-  44251,  // Noragami
-  44264,  // Kuroko's Basketball
-  46923,  // Food Wars
-  1772,   // Steins;Gate
-  66881,  // Steins;Gate 0
-  61023,  // Parasyte
-  80797,  // Vinland Saga S2
-  86831,  // Demon Slayer: Entertainment District Arc
-  114893, // Demon Slayer: Swordsmith Village Arc
-  119603, // Jujutsu Kaisen S2
-  93752,  // Jobless Reincarnation
-  48647,  // Tokyo Ravens
-  60780,  // Plastic Memories
-  62745,  // Charlotte
-  84958,  // Kaguya-sama: Love is War
-  94954,  // Bocchi the Rock
-  120089, // Frieren: Beyond Journey's End
-  209867, // Delicious in Dungeon
-  130925, // Mashle
-  135157, // Undead Unluck
-  192949, // Solo Leveling
-  76925,  // Bungo Stray Dogs
-  65496,  // Mob Psycho 100
-  65322,  // My Teen Romantic Comedy SNAFU
-  70160,  // One Punch Man S2
-  60664,  // Akame ga Kill
-  79775,  // Darling in the FranXX
-  74012,  // Sword Art Online: Alicization
-  88266,  // 86 Eighty-Six
-  91586,  // Ranking of Kings
-  92749,  // Komi Can't Communicate
-  100088, // Attack on Titan Final Season Part 2
-  111110, // Attack on Titan Final Season Part 3
-  76009,  // That Time I Got Reincarnated as a Slime S2
-  71712,  // The Rising of the Shield Hero S2
-  154977, // Zom 100
-  82684,  // Demon Slayer: Mugen Train Arc  
+  46260,  // Naruto (was mislabeled "My Hero Academia")
+  70881,  // Boruto: Naruto Next Generations (was mislabeled "Tokyo Ghoul")
+  46298,  // Hunter x Hunter (2011) (was mislabeled "Haikyuu!!")
+  72636,  // Made in Abyss (was mislabeled "The Rising of the Shield Hero")
+  65930,  // My Hero Academia (was mislabeled "Re:Zero")
+  76121,  // DARLING in the FRANXX (was mislabeled "Overlord")
+  46261,  // Fairy Tail (was mislabeled "Hunter x Hunter (2011)")
+  12609,  // Dragon Ball (was mislabeled "Code Geass")
+  114410, // Chainsaw Man (was mislabeled "Spy x Family")
+  84669,  // The Quintessential Quintuplets (was mislabeled "Dr. Stone")
+  61374,  // Tokyo Ghoul (was mislabeled "No Game No Life")
+  62745,  // Is It Wrong to Try to Pick Up Girls in a Dungeon? (was mislabeled "Charlotte")
+  120089, // SPY x FAMILY (was mislabeled "Frieren: Beyond Journey's End")
+  209867, // Frieren: Beyond Journey's End (was mislabeled "Delicious in Dungeon")
+  82684,  // That Time I Got Reincarnated as a Slime (was mislabeled "Demon Slayer: Mugen Train Arc")
+  45782,  // Sword Art Online
+  73223,  // Black Clover
+  890,    // Neon Genesis Evangelion
+  12971,  // Dragon Ball Z
+  1095,   // Ghost in the Shell: Stand Alone Complex
+  30991,  // Cowboy Bebop
+  37863,  // Fullmetal Alchemist (2003)
+  88803,  // Vinland Saga
+  94664,  // Mushoku Tensei: Jobless Reincarnation
+  131041, // Blue Lock
+  203737, // Oshi no Ko
+  88046,  // Fire Force
+  83097,  // The Promised Neverland
+  65844,  // KONOSUBA - God's Blessing on This Wonderful World!
+  60728,  // Kill la Kill
+  61663,  // Your Lie in April
+  62110,  // Assassination Classroom
+  64710,  // Noragami
+  45783,  // Kuroko's Basketball
+  62273,  // Food Wars! Shokugeki no Soma
+  42509,  // Steins;Gate
+  78102,  // Steins;Gate 0
+  61459,  // Parasyte -the maxim-
+  67395,  // Tokyo Ravens
+  62450,  // Plastic Memories
+  83121,  // Kaguya-sama: Love Is War
+  119100, // BOCCHI THE ROCK!
+  204832, // MASHLE: MAGIC AND MUSCLES
+  209077, // Undead Unluck
+  127532, // Solo Leveling
+  65931,  // Bungo Stray Dogs
+  67075,  // Mob Psycho 100
+  65676,  // My Teen Romantic Comedy SNAFU
+  61223,  // Akame ga Kill!
+  100565, // 86 EIGHTY-SIX
+  112613, // Ranking of Kings
+  123876, // Komi Can't Communicate
+  83095,  // The Rising of the Shield Hero
+  217766, // Zom 100: Bucket List of the Dead
   42916,  // Toradora!
   85991,  // Fruits Basket (2019)
   65249,  // Erased
   43865,  // Psycho-Pass
   42671,  // Elfen Lied
+  60863,  // Haikyuu!!
+  60808,  // No Game No Life
+  63145,  // Charlotte
+  64196,  // Overlord
+  86031,  // Dr. STONE
+  207784, // Delicious in Dungeon
+  31724,  // Code Geass: Lelouch of the Rebellion
+  65942,  // Re:ZERO -Starting Life in Another World-
 ];
 
 function delay(ms) {

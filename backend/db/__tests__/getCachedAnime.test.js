@@ -44,7 +44,7 @@ describe('getRecentlyCachedAnime', () => {
            (uuid_generate_v4(), 10163, 'tv', 'Newest', '{}', NOW() - INTERVAL '1 day')`
       );
 
-      const results = await getRecentlyCachedAnime(10);
+      const results = await getRecentlyCachedAnime(1000);
 
       const relevant = results.filter((r) => [10161, 10162, 10163].includes(r.tmdb_id));
       const titles = relevant.map((r) => r.title);
@@ -63,7 +63,7 @@ describe('getRecentlyCachedAnime', () => {
            (uuid_generate_v4(), 10165, 'tv', 'Fresh', '{}', NOW())`
       );
 
-      const results = await getRecentlyCachedAnime(10);
+      const results = await getRecentlyCachedAnime(1000);
 
       const relevant = results.filter((r) => [10164, 10165].includes(r.tmdb_id));
       expect(relevant[0].title).toBe('Fresh');

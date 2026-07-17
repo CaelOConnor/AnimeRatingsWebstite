@@ -5,9 +5,7 @@
 export const SEASONS = ['winter', 'spring', 'summer', 'fall'];
 
 export const GENRES = [
-  'Action & Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
-  'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Kids', 'Music',
-  'Mystery', 'News', 'Reality', 'Romance', 'Sci-Fi & Fantasy',
-  'Science Fiction', 'Soap', 'Talk', 'Thriller', 'War', 'War & Politics',
+  'Action & Adventure', 'Comedy', 'Crime', 'Documentary', 'Drama',
+  'Family', 'Kids', 'Mystery', 'Sci-Fi & Fantasy', 'War & Politics',
   'Western',
 ];
