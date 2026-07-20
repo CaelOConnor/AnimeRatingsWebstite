@@ -154,13 +154,26 @@ router.post('/fetch/:tmdbId', authenticateToken, async (req, res) => {
 
   const tmdbType = req.query.type === 'movie' ? 'movie' : 'tv';
 
+  // Movies don't have seasons, so a season param is silently ignored for
+  // them rather than treated as an error.
+  let seasonNumber = null;
+  if (req.query.season !== undefined) {
+    const rawSeason = String(req.query.season).trim();
+    if (!/^\d+$/.test(rawSeason)) {
+      return res.status(400).json({ error: 'season must be a non-negative integer.' });
+    }
+    if (tmdbType === 'tv') {
+      seasonNumber = parseInt(rawSeason, 10);
+    }
+  }
+
   try {
-    const cached = await getAnimeByTmdbIdentifiers(tmdbId, tmdbType);
+    const cached = await getAnimeByTmdbIdentifiers(tmdbId, tmdbType, seasonNumber);
     if (cached) {
       return res.json(cached);
     }
 
-    const tmdbData = await fetchFromTmdb(tmdbId, tmdbType);
+    const tmdbData = await fetchFromTmdb(tmdbId, tmdbType, seasonNumber);
     const anime = await upsertAnime(tmdbData);
     res.status(201).json(anime);
   } catch (err) {
@@ -192,7 +205,7 @@ async function tmdbFetch(url, apiKey) {
   return res.json();
 }
 
-async function fetchFromTmdb(tmdbId, tmdbType) {
+export async function fetchFromTmdb(tmdbId, tmdbType, seasonNumber = null) {
   const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
   const apiKey = process.env.TMDB_API_KEY;
 
@@ -200,10 +213,16 @@ async function fetchFromTmdb(tmdbId, tmdbType) {
 
   const typeSegment = tmdbType === 'movie' ? 'movie' : 'tv';
 
-  // Fetch details and keywords in parallel
-  const [data, keywordData] = await Promise.all([
+  // Movies don't have seasons — only fetch season-specific data for TV.
+  const fetchSeason = typeSegment === 'tv' && seasonNumber !== null && seasonNumber !== undefined;
+
+  // Fetch details, keywords, and (optionally) season data in parallel
+  const [data, keywordData, seasonData] = await Promise.all([
     tmdbFetch(`${TMDB_BASE_URL}/${typeSegment}/${tmdbId}?language=en-US`, apiKey),
     tmdbFetch(`${TMDB_BASE_URL}/${typeSegment}/${tmdbId}/keywords`, apiKey),
+    fetchSeason
+      ? tmdbFetch(`${TMDB_BASE_URL}/tv/${tmdbId}/season/${seasonNumber}?language=en-US`, apiKey)
+      : Promise.resolve(null),
   ]);
 
   // Block adult content
@@ -236,19 +255,41 @@ async function fetchFromTmdb(tmdbId, tmdbType) {
     };
   }
 
+  // Season-specific overrides: episode count and air date come from the
+  // season itself, not the series-aggregate base endpoint. Title gets the
+  // season name appended so two season-cards for the same show don't look
+  // identical in a list.
+  const title = fetchSeason
+    ? `${data.name} — ${seasonData.name || `Season ${seasonNumber}`}`
+    : data.name;
+  const episodeCount = fetchSeason
+    ? (seasonData.episode_count ?? seasonData.episodes?.length ?? null)
+    : (data.number_of_episodes ?? null);
+  const firstAirDate = fetchSeason
+    ? (seasonData.air_date ?? null)
+    : (data.first_air_date ?? null);
+  // TMDB's season endpoint only ever has poster_path, never backdrop_path —
+  // backdropPath effectively always falls back to the series backdrop.
+  const posterPath = fetchSeason
+    ? (seasonData.poster_path ?? data.poster_path ?? null)
+    : (data.poster_path ?? null);
+  const backdropPath = fetchSeason
+    ? (seasonData.backdrop_path ?? data.backdrop_path ?? null)
+    : (data.backdrop_path ?? null);
+
   return {
     tmdbId:        data.id,
     tmdbType:      'tv',
-    seasonNumber:  null,
-    title:         data.name,
+    seasonNumber:  fetchSeason ? seasonNumber : null,
+    title,
     originalTitle: data.original_name ?? null,
     overview:      data.overview ?? null,
-    posterPath:    data.poster_path ?? null,
-    backdropPath:  data.backdrop_path ?? null,
-    episodeCount:  data.number_of_episodes ?? null,
+    posterPath,
+    backdropPath,
+    episodeCount,
     seasonCount:   data.number_of_seasons ?? null,
     status:        data.status ?? null,
-    firstAirDate:  data.first_air_date ?? null,
+    firstAirDate,
     genres:        (data.genres ?? []).map(g => g.name).filter(g => g !== 'Animation'),
   };
 }

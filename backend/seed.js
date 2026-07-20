@@ -106,12 +106,35 @@ const TV_IDS = [
   65942,  // Re:ZERO -Starting Life in Another World-
 ];
 
+// Shows that span multiple TMDB seasons, where a specific season (beyond
+// the whole-series row above) should also be cached as its own row.
+// NOTE: Frieren's season 2 isn't in TMDB's data yet as of this writing —
+// TMDB currently only has season 0 (Specials) and season 1 for tmdb_id
+// 209867 (verified directly against TMDB's /tv/209867 seasons array).
+// Add { id: 209867, season: 2 } here once TMDB catalogs it. Auditing the
+// rest of TV_IDS for other multi-season shows is deferred to a later pass.
+const SEASON_ENTRIES = [];
+
+// Anime movies — verified individually against TMDB's search + keywords
+// endpoints before being hardcoded (same rule as TV_IDS/SEASON_ENTRIES).
+const MOVIE_IDS = [
+  129,    // Spirited Away
+  372058, // Your Name.
+  128,    // Princess Mononoke
+];
+
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function fetchAnime(tmdbId) {
-  const res = await fetch(`${BASE_URL}/api/anime/fetch/${tmdbId}`, {
+async function fetchAnime(tmdbId, { season, type } = {}) {
+  const params = new URLSearchParams();
+  if (season !== undefined) params.set('season', season);
+  if (type !== undefined) params.set('type', type);
+  const qs = params.toString();
+  const url = `${BASE_URL}/api/anime/fetch/${tmdbId}${qs ? `?${qs}` : ''}`;
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${TOKEN}` },
   });
@@ -130,20 +153,31 @@ async function fetchAnime(tmdbId) {
 
 async function main() {
   const ids = [...new Set(TV_IDS)];
-  console.log(`Seeding ${ids.length} anime...\n`);
+  const movieIds = [...new Set(MOVIE_IDS)];
+  const entries = [
+    ...ids.map(id => ({ id })),
+    ...SEASON_ENTRIES,
+    ...movieIds.map(id => ({ id, type: 'movie' })),
+  ];
+  console.log(`Seeding ${ids.length} anime (+ ${SEASON_ENTRIES.length} season-specific entries, + ${movieIds.length} movies)...\n`);
 
   let added = 0, cached = 0, skipped = 0, failed = 0;
 
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    const result = await fetchAnime(id);
+  for (let i = 0; i < entries.length; i++) {
+    const { id, season, type } = entries[i];
+    const result = await fetchAnime(id, { season, type });
 
     const icon = result.status === 'added'     ? '✓' :
                  result.status === 'cached'    ? '~' :
                  result.status === 'skipped'   ? '⊘' :
                  result.status === 'not_found' ? '?' : '✗';
 
-    console.log(`[${String(i + 1).padStart(3)}/${ids.length}] ${icon} tmdbId=${id} (${result.status}${result.detail ? ': ' + result.detail : ''})`);
+    const label = [
+      `tmdbId=${id}`,
+      season !== undefined ? `season=${season}` : null,
+      type !== undefined ? `type=${type}` : null,
+    ].filter(Boolean).join(' ');
+    console.log(`[${String(i + 1).padStart(3)}/${entries.length}] ${icon} ${label} (${result.status}${result.detail ? ': ' + result.detail : ''})`);
 
     if (result.status === 'added')   added++;
     if (result.status === 'cached')  cached++;

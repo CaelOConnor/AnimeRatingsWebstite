@@ -22,8 +22,8 @@ async function makeAnime(overrides = {}) {
   const tmdbId = overrides.tmdbId ?? makeTmdbId();
   return upsertAnime({
     tmdbId,
-    tmdbType: 'tv',
-    seasonNumber: null,
+    tmdbType: overrides.tmdbType ?? 'tv',
+    seasonNumber: overrides.seasonNumber ?? null,
     title: overrides.title ?? `Anime ${tmdbId}`,
     originalTitle: null,
     overview: overrides.overview ?? 'A test anime.',
@@ -418,4 +418,63 @@ describe('POST /api/anime/fetch/:tmdbId', () => {
 
   // NOTE: cache-miss (TMDB live fetch) tests belong in integration tests
   // once the TMDB client is wired up. Skipping here to avoid real HTTP calls.
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/anime/fetch/:tmdbId — season query param
+// ---------------------------------------------------------------------------
+
+describe('POST /api/anime/fetch/:tmdbId — season query param', () => {
+  let seasonZeroAnime, movieAnime;
+
+  beforeAll(async () => {
+    [seasonZeroAnime, movieAnime] = await Promise.all([
+      makeAnime({ title: 'Season Zero Show', seasonNumber: 0 }),
+      makeAnime({ title: 'Test Movie', tmdbType: 'movie' }),
+    ]);
+  });
+
+  it('returns 400 for a non-integer season', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${animeA.tmdb_id}`)
+      .query({ season: 'abc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a negative season', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${animeA.tmdb_id}`)
+      .query({ season: '-1' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts season=0 and returns the matching season-specific cached row', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${seasonZeroAnime.tmdb_id}`)
+      .query({ season: '0' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: seasonZeroAnime.id,
+      season_number: 0,
+    });
+  });
+
+  it('ignores the season param for movie type and returns the cached movie', async () => {
+    const res = await request
+      .post(`/api/anime/fetch/${movieAnime.tmdb_id}`)
+      .query({ type: 'movie', season: '2' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: movieAnime.id,
+      tmdb_type: 'movie',
+    });
+  });
 });

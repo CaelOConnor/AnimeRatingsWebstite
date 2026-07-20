@@ -278,7 +278,9 @@ export default function AnimeDetail() {
                 {anime.episode_count}
               </span>
             )}
-            {anime.season_count && (
+            {/* Season count is only meaningful on the whole-series row —
+                on a season-specific row (e.g. "Season 2") it's confusing. */}
+            {anime.season_count && anime.season_number == null && (
               <span className="anime-detail__fact">
                 <span className="anime-detail__fact-label">Seasons</span>
                 {anime.season_count}
