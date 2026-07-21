@@ -116,6 +116,29 @@ export async function getReports(status = 'pending') {
 }
 
 /**
+ * getAllFeedback
+ * --------------
+ * Returns unresolved feedback rows (show requests + bug reports), newest
+ * first, with the submitter's username joined in. Flat list — no grouping,
+ * unlike getReports() above, since feedback isn't tied to a moderation
+ * workflow. Resolved rows are filtered out here (not deleted — see
+ * resolveFeedback() in db/feedback.js) so completed items simply stop
+ * appearing without any frontend-side filtering.
+ */
+export async function getAllFeedback() {
+  const result = await query(
+    `SELECT
+      f.id, f.user_id, f.type, f.content, f.created_at,
+      u.username
+     FROM feedback f
+     JOIN users u ON u.id = f.user_id
+     WHERE f.resolved = FALSE
+     ORDER BY f.created_at DESC`
+  );
+  return result.rows;
+}
+
+/**
  * dismissAllReportsForUser
  * ------------------------
  * Sets all pending reports against a user to 'dismissed'.

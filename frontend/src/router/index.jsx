@@ -35,8 +35,11 @@ export const router = createBrowserRouter([
       // Mod + admin only
       { path: 'reports', element: <RoleRoute roles={['moderator', 'admin']}><Reports /></RoleRoute> },
 
-      // Admin only
-      { path: 'admin', element: <RoleRoute roles={['admin']}><Admin /></RoleRoute> },
+      // Mod + admin — Admin.jsx's Users section actions (ban/unban/delete) are
+      // still effectively admin-focused in practice, but the route itself now
+      // matches the backend's actual permission model (GET /api/admin/feedback
+      // and /api/admin/reports both allow moderators too), same as /reports.
+      { path: 'admin', element: <RoleRoute roles={['moderator', 'admin']}><Admin /></RoleRoute> },
     ],
   },
 ]);

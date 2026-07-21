@@ -723,6 +723,168 @@ describe('GET /api/admin/reports', () => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/admin/feedback
+// ---------------------------------------------------------------------------
+
+describe('GET /api/admin/feedback', () => {
+  beforeEach(async () => {
+    await query(
+      `INSERT INTO feedback (user_id, type, content) VALUES ($1, 'show_request', 'Please add Frieren season 2.')`,
+      [regularUser.id]
+    );
+    await query(
+      `INSERT INTO feedback (user_id, type, content) VALUES ($1, 'bug_report', 'Star ratings look off.')`,
+      [regularUser.id]
+    );
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM feedback WHERE user_id = $1`, [regularUser.id]);
+  });
+
+  it('returns 200 and an array for an admin', async () => {
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns 200 and an array for a moderator', async () => {
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${modToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns both show_request and bug_report rows with correct fields', async () => {
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    const rows = res.body.filter(r => r.user_id === regularUser.id);
+    const types = rows.map(r => r.type);
+    expect(types).toContain('show_request');
+    expect(types).toContain('bug_report');
+    expect(rows[0].content).toBeDefined();
+    expect(rows[0].username).toBeDefined();
+    expect(rows[0].created_at).toBeDefined();
+  });
+
+  it('returns 403 for a regular user', async () => {
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${regularToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request.get('/api/admin/feedback');
+    expect(res.status).toBe(401);
+  });
+
+  it('excludes resolved rows', async () => {
+    const inserted = await query(
+      `INSERT INTO feedback (user_id, type, content) VALUES ($1, 'bug_report', 'Already handled.') RETURNING id`,
+      [regularUser.id]
+    );
+    await query(`UPDATE feedback SET resolved = TRUE WHERE id = $1`, [inserted.rows[0].id]);
+
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    const ids = res.body.map(r => r.id);
+    expect(ids).not.toContain(inserted.rows[0].id);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /api/admin/feedback/:id
+// ---------------------------------------------------------------------------
+
+describe('PATCH /api/admin/feedback/:id', () => {
+  let feedbackRow;
+
+  beforeEach(async () => {
+    const inserted = await query(
+      `INSERT INTO feedback (user_id, type, content) VALUES ($1, 'bug_report', 'To be resolved.') RETURNING *`,
+      [regularUser.id]
+    );
+    feedbackRow = inserted.rows[0];
+  });
+
+  afterEach(async () => {
+    await query(`DELETE FROM feedback WHERE user_id = $1`, [regularUser.id]);
+  });
+
+  it('returns 200 and marks the row resolved for an admin', async () => {
+    const res = await request
+      .patch(`/api/admin/feedback/${feedbackRow.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.resolved).toBe(true);
+  });
+
+  it('excludes the resolved row from a subsequent GET', async () => {
+    await request
+      .patch(`/api/admin/feedback/${feedbackRow.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const res = await request
+      .get('/api/admin/feedback')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    const ids = res.body.map(r => r.id);
+    expect(ids).not.toContain(feedbackRow.id);
+  });
+
+  it('returns 200 for a moderator', async () => {
+    const res = await request
+      .patch(`/api/admin/feedback/${feedbackRow.id}`)
+      .set('Authorization', `Bearer ${modToken}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 403 for a regular user', async () => {
+    const res = await request
+      .patch(`/api/admin/feedback/${feedbackRow.id}`)
+      .set('Authorization', `Bearer ${regularToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 when no token is provided', async () => {
+    const res = await request.patch(`/api/admin/feedback/${feedbackRow.id}`);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 for a malformed id', async () => {
+    const res = await request
+      .patch('/api/admin/feedback/not-a-uuid')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for a well-formed but non-existent id', async () => {
+    const res = await request
+      .patch('/api/admin/feedback/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/admin/reports/dismiss/:userId
 // ---------------------------------------------------------------------------
 

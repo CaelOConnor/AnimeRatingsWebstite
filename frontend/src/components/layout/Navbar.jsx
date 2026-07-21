@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import LoginModal from './LoginModal';
+import FeedbackModal from './FeedbackModal';
 import './Navbar.css';
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -119,12 +120,27 @@ function SearchSort({ placeholder, searchQuery, setSearchQuery, sortBy, setSortB
 }
 
 // Display account-related navigation for logged-in users.
-function AccountButton({ user, onLogout }) {
+function AccountButton({ user, onLogout, onOpenFeedback }) {
   // Administrators have access to additional navigation links.
   const isAdmin = user.role_type === 'admin';
 
   return (
     <div className="navbar__account-group">
+      {/* Quick-submit entry points — shown on every page while logged in. */}
+      <button
+        type="button"
+        className="navbar__btn navbar__btn--ghost"
+        onClick={() => onOpenFeedback('show_request')}
+      >
+        Request a show
+      </button>
+      <button
+        type="button"
+        className="navbar__btn navbar__btn--ghost"
+        onClick={() => onOpenFeedback('bug_report')}
+      >
+        Report a bug
+      </button>
       {isAdmin && (
         <>
           <Link to="/reports" className="navbar__btn navbar__btn--ghost">Reports</Link>
@@ -158,6 +174,9 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
   // Control whether the login modal is visible.
   const [loginOpen, setLoginOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Which feedback modal (if any) is open: null | 'show_request' | 'bug_report'.
+  const [feedbackType, setFeedbackType] = useState(null);
 
   const isHome    = pathname === '/';
   const isReports = pathname === '/reports';
@@ -194,7 +213,7 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
 
   // Show account controls for logged-in users, otherwise display the login and sign-up buttons.
   const right = user
-    ? <AccountButton user={user} onLogout={logout} />
+    ? <AccountButton user={user} onLogout={logout} onOpenFeedback={setFeedbackType} />
     : (
       <div className="navbar__auth-group">
         <button onClick={() => setLoginOpen(true)} className="navbar__btn navbar__btn--ghost">Log in</button>
@@ -215,6 +234,13 @@ export default function Navbar({ searchQuery, setSearchQuery, sortBy, setSortBy 
       
       {/* Login dialog displayed when requested. */}
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
+
+      {/* Feedback dialog (show request / bug report) displayed when requested. */}
+      <FeedbackModal
+        isOpen={feedbackType !== null}
+        type={feedbackType}
+        onClose={() => setFeedbackType(null)}
+      />
     </>
   );
 }

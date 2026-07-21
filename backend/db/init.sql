@@ -111,6 +111,24 @@ CREATE TABLE reports (
 CREATE INDEX idx_reports_reported_user ON reports (reported_user_id);
 CREATE INDEX idx_reports_status        ON reports (status);
 
+-- ── Feedback (show requests & bug reports) ───────────────────────────────────
+-- Deliberately separate from `reports` above — that table's target_type
+-- CHECK constraint and NOT NULL target_id/reported_user_id are built around
+-- the user-moderation workflow (getReports() in db/admin.js groups by
+-- reported_user_id), which show requests / bug reports don't fit at all.
+CREATE TABLE feedback (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type       TEXT        NOT NULL CHECK (type IN ('show_request', 'bug_report')),
+  content    TEXT        NOT NULL,
+  resolved   BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_feedback_user     ON feedback (user_id);
+CREATE INDEX idx_feedback_type     ON feedback (type);
+CREATE INDEX idx_feedback_resolved ON feedback (resolved);
+
 -- ── Auto-update updated_at ────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$

@@ -1,12 +1,33 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../lib/api';
 import './Admin.css';
 
+const FEEDBACK_TYPE_LABELS = {
+  show_request: 'Show Request',
+  bug_report:   'Bug Report',
+};
+
 export default function Admin() {
+  // Ban/unban/delete are admin-only on the backend — moderators can view
+  // this page (per the route's roles) but shouldn't see action buttons
+  // that would just 403 when clicked.
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.role_type === 'admin';
+
   // Store the user list and the page's current state.
   const [users, setUsers]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
+
+  // Store the feedback list (show requests + bug reports) and its own page state.
+  const [feedback, setFeedback]               = useState([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(true);
+  const [feedbackError, setFeedbackError]     = useState(null);
+
+  // State used while marking a feedback row as completed (resolved).
+  const [resolvingId, setResolvingId]     = useState(null);
+  const [resolveError, setResolveError]   = useState(null); // { id, message }
 
   // State used for searching, filtering, and performing administrative actions on individual users.
   const [search, setSearch]                 = useState('');
@@ -18,6 +39,30 @@ export default function Admin() {
   useEffect(() => {
     loadUsers();
   }, [bannedOnly]);
+
+  // Load the feedback list once, on mount.
+  useEffect(() => {
+    api.get('/api/admin/feedback')
+      .then(data => setFeedback(data))
+      .catch(err => setFeedbackError(err.message || 'Failed to load feedback.'))
+      .finally(() => setFeedbackLoading(false));
+  }, []);
+
+  // Mark a feedback row as completed. Removes it from local state on success
+  // instead of a full refetch — the row stays put with an inline error if
+  // the request fails.
+  async function handleResolveFeedback(item) {
+    setResolveError(null);
+    setResolvingId(item.id);
+    try {
+      await api.patch(`/api/admin/feedback/${item.id}`);
+      setFeedback(prev => prev.filter(f => f.id !== item.id));
+    } catch (err) {
+      setResolveError({ id: item.id, message: err.message || 'Failed to mark as completed.' });
+    } finally {
+      setResolvingId(null);
+    }
+  }
 
   // Retrieve the appropriate list of users from the backend.
   async function loadUsers() {
@@ -168,9 +213,11 @@ export default function Admin() {
                         )}
                       </td>
                       <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                      {/* Ban, unban, or delete the selected user. */}
+                      {/* Ban, unban, or delete the selected user — admin-only actions. */}
                       <td className="admin__actions">
-                        {user.is_banned ? (
+                        {!isAdmin ? (
+                          <span className="admin__no-actions">—</span>
+                        ) : user.is_banned ? (
                           <button
                             className="admin__btn admin__btn--secondary"
                             onClick={() => handleUnban(user)}
@@ -187,13 +234,72 @@ export default function Admin() {
                             {actioningId === user.id ? '…' : 'Ban'}
                           </button>
                         )}
+                        {isAdmin && (
+                          <button
+                            className="admin__btn admin__btn--danger"
+                            onClick={() => handleDelete(user)}
+                            disabled={actioningId === user.id}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="admin__section admin__section--spaced">
+          <div className="admin__section-header">
+            <h2 className="admin__section-title">Feedback</h2>
+          </div>
+
+          {/* Display the appropriate page state before showing the feedback table. */}
+          {feedbackLoading ? (
+            <p className="admin__state">Loading feedback…</p>
+          ) : feedbackError ? (
+            <p className="admin__state admin__state--error">{feedbackError}</p>
+          ) : feedback.length === 0 ? (
+            <p className="admin__state">No feedback submitted yet.</p>
+          ) : (
+            <div className="admin__table-wrap">
+              {/* Show requests and bug reports, newest first (as returned by the API). */}
+              <table className="admin__table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Content</th>
+                    <th>Submitted By</th>
+                    <th>Date</th>
+                    <th aria-label="Actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feedback.map(item => (
+                    <tr key={item.id}>
+                      <td>
+                        <span className={`admin__feedback-type admin__feedback-type--${item.type}`}>
+                          {FEEDBACK_TYPE_LABELS[item.type] ?? item.type}
+                        </span>
+                      </td>
+                      <td className="admin__feedback-content">{item.content}</td>
+                      <td>{item.username}</td>
+                      <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                      {/* Mark this feedback row as completed — removes it from the list. */}
+                      <td className="admin__feedback-actions">
                         <button
-                          className="admin__btn admin__btn--danger"
-                          onClick={() => handleDelete(user)}
-                          disabled={actioningId === user.id}
+                          className="admin__btn admin__btn--success"
+                          onClick={() => handleResolveFeedback(item)}
+                          disabled={resolvingId === item.id}
                         >
-                          Delete
+                          {resolvingId === item.id ? '…' : 'Completed?'}
                         </button>
+                        {resolveError?.id === item.id && (
+                          <p className="admin__feedback-resolve-error">{resolveError.message}</p>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -3,7 +3,8 @@ import { authenticateToken } from '../middleware/auth.js';
 import { getUserById, deleteUserById, banUser, unbanUser } from '../db/users.js';
 import { getReviewById, deleteReview } from '../db/reviews.js';
 import { getCommentById, deleteComment } from '../db/comments.js';
-import { getUsersByRole, getBannedUsers, getRecentReviews, getReports, dismissAllReportsForUser } from '../db/admin.js';
+import { getUsersByRole, getBannedUsers, getRecentReviews, getReports, dismissAllReportsForUser, getAllFeedback } from '../db/admin.js';
+import { resolveFeedback } from '../db/feedback.js';
 import { denylistAllUserTokens } from '../services/redis.js';
 
 const router = Router();
@@ -237,6 +238,42 @@ router.get('/reports', requireAuth, requireMod, async (req, res) => {
   } catch (err) {
     console.error('[GET /api/admin/reports]', err);
     res.status(500).json({ error: 'Failed to fetch reports.' });
+  }
+});
+
+// ── GET /api/admin/feedback ───────────────────────────────────────────────────
+// Mod + admin. Returns all show requests + bug reports, newest first.
+
+router.get('/feedback', requireAuth, requireMod, async (req, res) => {
+  try {
+    const feedback = await getAllFeedback();
+    res.json(feedback);
+  } catch (err) {
+    console.error('[GET /api/admin/feedback]', err);
+    res.status(500).json({ error: 'Failed to fetch feedback.' });
+  }
+});
+
+// ── PATCH /api/admin/feedback/:id ─────────────────────────────────────────────
+// Mod + admin. Marks a feedback row as resolved (soft — row is kept, just
+// filtered out of GET /api/admin/feedback going forward).
+
+router.patch('/feedback/:id', requireAuth, requireMod, async (req, res) => {
+  const { id } = req.params;
+
+  if (!UUID_REGEX.test(id)) {
+    return res.status(400).json({ error: 'id must be a valid UUID.' });
+  }
+
+  try {
+    const feedback = await resolveFeedback(id);
+    if (!feedback) {
+      return res.status(404).json({ error: 'Feedback not found.' });
+    }
+    res.json(feedback);
+  } catch (err) {
+    console.error('[PATCH /api/admin/feedback/:id]', err);
+    res.status(500).json({ error: 'Failed to update feedback.' });
   }
 });
 

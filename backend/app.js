@@ -9,6 +9,7 @@ import animeRoutes from './routes/anime.js';
 import userRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import reportRoutes from './routes/reports.js';
+import feedbackRoutes from './routes/feedback.js';
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/anime', animeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from backend!' });
