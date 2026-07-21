@@ -8,6 +8,9 @@ const FEEDBACK_TYPE_LABELS = {
   bug_report:   'Bug Report',
 };
 
+const API_BASE   = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const TMDB_THUMB = 'https://image.tmdb.org/t/p/w92';
+
 export default function Admin() {
   // Ban/unban/delete are admin-only on the backend — moderators can view
   // this page (per the route's roles) but shouldn't see action buttons
@@ -28,6 +31,15 @@ export default function Admin() {
   // State used while marking a feedback row as completed (resolved).
   const [resolvingId, setResolvingId]     = useState(null);
   const [resolveError, setResolveError]   = useState(null); // { id, message }
+
+  // State used by the "Add a Show" quick-add control.
+  const [addQuery, setAddQuery]             = useState('');
+  const [addSearching, setAddSearching]     = useState(false);
+  const [addSearchError, setAddSearchError] = useState(null);
+  const [addCandidates, setAddCandidates]   = useState(null); // null = no search run yet
+  const [addSeasonInputs, setAddSeasonInputs] = useState({}); // { [candidateId]: seasonString }
+  const [addingId, setAddingId]             = useState(null);
+  const [addResult, setAddResult]           = useState(null); // { id, success, message }
 
   // State used for searching, filtering, and performing administrative actions on individual users.
   const [search, setSearch]                 = useState('');
@@ -61,6 +73,64 @@ export default function Admin() {
       setResolveError({ id: item.id, message: err.message || 'Failed to mark as completed.' });
     } finally {
       setResolvingId(null);
+    }
+  }
+
+  // Search TMDB for "add a show" candidates. A plain number is treated as a
+  // direct TMDB id lookup by the backend, so this same call covers both
+  // "search by name" and "confirm by id" — the id case just comes back as a
+  // single-candidate array.
+  async function handleAddShowSearch(e) {
+    e.preventDefault();
+    const q = addQuery.trim();
+    if (!q) return;
+
+    setAddSearching(true);
+    setAddSearchError(null);
+    setAddCandidates(null);
+    setAddResult(null);
+    try {
+      const results = await api.get(`/api/admin/anime/search?query=${encodeURIComponent(q)}`);
+      setAddCandidates(results);
+    } catch (err) {
+      setAddSearchError(err.message || 'Search failed.');
+    } finally {
+      setAddSearching(false);
+    }
+  }
+
+  // Add the selected candidate to the catalog. Uses a raw fetch (not the
+  // shared `api` helper) because the 200-vs-201 status distinguishes
+  // "already cached" from "newly added", and `api`'s wrapper only returns
+  // the parsed body — not the status code.
+  async function handleAddShowConfirm(candidate) {
+    setAddingId(candidate.id);
+    setAddResult(null);
+
+    const params = new URLSearchParams();
+    if (candidate.mediaType === 'movie') {
+      params.set('type', 'movie');
+    } else {
+      const season = (addSeasonInputs[candidate.id] ?? '').trim();
+      if (season !== '') params.set('season', season);
+    }
+    const qs = params.toString();
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/anime/fetch/${candidate.id}${qs ? `?${qs}` : ''}`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add show.');
+
+      const message = res.status === 201 ? `Added: ${data.title}` : `Already in catalog: ${data.title}`;
+      setAddResult({ id: candidate.id, success: true, message });
+    } catch (err) {
+      setAddResult({ id: candidate.id, success: false, message: err.message || 'Failed to add show.' });
+    } finally {
+      setAddingId(null);
     }
   }
 
@@ -145,7 +215,95 @@ export default function Admin() {
       <div className="admin__container">
         <h1 className="admin__title">Admin</h1>
 
-        <section className="admin__section">
+        {/* Quick-add a show by TMDB id or title — admin-only, same as the
+            backend's GET /api/admin/anime/search gating. */}
+        {isAdmin && (
+          <section className="admin__section">
+            <div className="admin__section-header">
+              <h2 className="admin__section-title">Add a Show</h2>
+            </div>
+
+            <form className="admin__add-show-form" onSubmit={handleAddShowSearch}>
+              <input
+                className="admin__search"
+                type="text"
+                placeholder="Show name or TMDB id…"
+                value={addQuery}
+                onChange={e => setAddQuery(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="admin__btn admin__btn--secondary"
+                disabled={addSearching || !addQuery.trim()}
+              >
+                {addSearching ? 'Searching…' : 'Search'}
+              </button>
+            </form>
+
+            {addSearchError && <p className="admin__error">{addSearchError}</p>}
+
+            {addCandidates && (
+              addCandidates.length === 0 ? (
+                <p className="admin__state">No matches found on TMDB.</p>
+              ) : (
+                <div className="admin__add-show-results">
+                  {addCandidates.map(candidate => (
+                    <div key={candidate.id} className="admin__add-show-card">
+                      {candidate.posterPath ? (
+                        <img
+                          className="admin__add-show-poster"
+                          src={`${TMDB_THUMB}${candidate.posterPath}`}
+                          alt={candidate.title}
+                        />
+                      ) : (
+                        <div className="admin__add-show-poster admin__add-show-poster--empty" />
+                      )}
+
+                      <div className="admin__add-show-info">
+                        <span className="admin__add-show-title">{candidate.title}</span>
+                        <span className="admin__add-show-meta">
+                          {candidate.year ?? 'Unknown year'} · {candidate.mediaType === 'movie' ? 'Movie' : 'TV'}
+                        </span>
+
+                        {/* Movies don't have seasons — only offer this for TV candidates. */}
+                        {candidate.mediaType === 'tv' && (
+                          <input
+                            className="admin__add-show-season"
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Season (optional)"
+                            value={addSeasonInputs[candidate.id] ?? ''}
+                            onChange={e => setAddSeasonInputs(prev => ({ ...prev, [candidate.id]: e.target.value }))}
+                          />
+                        )}
+
+                        {addResult?.id === candidate.id && (
+                          <p className={
+                            addResult.success
+                              ? 'admin__add-show-result'
+                              : 'admin__add-show-result admin__add-show-result--error'
+                          }>
+                            {addResult.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        className="admin__btn admin__btn--success"
+                        onClick={() => handleAddShowConfirm(candidate)}
+                        disabled={addingId === candidate.id}
+                      >
+                        {addingId === candidate.id ? '…' : 'Add'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </section>
+        )}
+
+        <section className="admin__section admin__section--spaced">
           <div className="admin__section-header">
             <h2 className="admin__section-title">Users</h2>
 

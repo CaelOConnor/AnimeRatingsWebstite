@@ -35,13 +35,13 @@ describe('getRecentlyCachedAnime', () => {
   });
 
   describe('ordering', () => {
-    it('returns anime ordered by cached_at descending', async () => {
+    it('returns anime ordered by first_air_date descending (newest release first)', async () => {
       await query(
-        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, cached_at)
+        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, first_air_date, cached_at)
          VALUES
-           (uuid_generate_v4(), 10161, 'tv', 'Oldest', '{}', NOW() - INTERVAL '3 days'),
-           (uuid_generate_v4(), 10162, 'tv', 'Middle', '{}', NOW() - INTERVAL '2 days'),
-           (uuid_generate_v4(), 10163, 'tv', 'Newest', '{}', NOW() - INTERVAL '1 day')`
+           (uuid_generate_v4(), 10161, 'tv', 'Oldest', '{}', '2020-01-01', NOW()),
+           (uuid_generate_v4(), 10162, 'tv', 'Middle', '{}', '2022-01-01', NOW()),
+           (uuid_generate_v4(), 10163, 'tv', 'Newest', '{}', '2024-01-01', NOW())`
       );
 
       const results = await getRecentlyCachedAnime(1000);
@@ -55,18 +55,37 @@ describe('getRecentlyCachedAnime', () => {
       expect(titles[2]).toBe('Oldest');
     });
 
-    it('returns the most recently cached row first', async () => {
+    it('sorts by release/air date, not by when the row was cached (mixed case)', async () => {
+      // "Spirited Away" scenario: a title cached into the DB very recently
+      // but released long ago should NOT outrank a title with a newer
+      // release date that happened to be cached earlier.
       await query(
-        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, cached_at)
+        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, first_air_date, cached_at)
          VALUES
-           (uuid_generate_v4(), 10164, 'tv', 'Old',   '{}', NOW() - INTERVAL '5 days'),
-           (uuid_generate_v4(), 10165, 'tv', 'Fresh', '{}', NOW())`
+           (uuid_generate_v4(), 10164, 'movie', 'Old Release, Cached Recently', '{}', '2001-07-20', NOW()),
+           (uuid_generate_v4(), 10165, 'tv',    'New Release, Cached Long Ago', '{}', '2024-01-01', NOW() - INTERVAL '30 days')`
       );
 
       const results = await getRecentlyCachedAnime(1000);
 
       const relevant = results.filter((r) => [10164, 10165].includes(r.tmdb_id));
-      expect(relevant[0].title).toBe('Fresh');
+      expect(relevant[0].title).toBe('New Release, Cached Long Ago');
+      expect(relevant[1].title).toBe('Old Release, Cached Recently');
+    });
+
+    it('sorts rows with a null first_air_date last', async () => {
+      await query(
+        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, first_air_date, cached_at)
+         VALUES
+           (uuid_generate_v4(), 10166, 'tv', 'Unknown Air Date', '{}', NULL, NOW()),
+           (uuid_generate_v4(), 10167, 'tv', 'Has Air Date', '{}', '2019-01-01', NOW())`
+      );
+
+      const results = await getRecentlyCachedAnime(1000);
+
+      const relevant = results.filter((r) => [10166, 10167].includes(r.tmdb_id));
+      expect(relevant[0].title).toBe('Has Air Date');
+      expect(relevant[1].title).toBe('Unknown Air Date');
     });
   });
 
@@ -90,8 +109,7 @@ describe('getRecentlyCachedAnime', () => {
       await createTestAnime({ tmdbId: 10161 });
       await createTestAnime({ tmdbId: 10162, tmdbType: 'movie' });
 
-      const results = await getRecentlyCachedAnime(10);
-      expect(results.length).toBeLessThanOrEqual(10);
+      const results = await getRecentlyCachedAnime(1000);
       expect(results.length).toBeGreaterThan(0);
     });
   });
@@ -100,7 +118,9 @@ describe('getRecentlyCachedAnime', () => {
     it('returns all expected columns', async () => {
       await createTestAnime({ tmdbId: 10161 });
 
-      const results = await getRecentlyCachedAnime(10);
+      // A large limit — these rows have no first_air_date (sorts last), so a
+      // small limit could push them out depending on unrelated DB state.
+      const results = await getRecentlyCachedAnime(1000);
       const row = results.find((r) => r.tmdb_id === 10161);
 
       const expectedKeys = [
@@ -147,7 +167,7 @@ describe('season/year filters', () => {
       await createTestAnime({ tmdbId: 10161, title: 'Winter Show', firstAirDate: '2024-01-15' });
       await createTestAnime({ tmdbId: 10162, title: 'Summer Show', firstAirDate: '2024-07-15' });
 
-      const results = await getRecentlyCachedAnime(10, { season: 'winter' });
+      const results = await getRecentlyCachedAnime(1000, { season: 'winter' });
 
       expect(results.some((r) => r.tmdb_id === 10161)).toBe(true);
       expect(results.some((r) => r.tmdb_id === 10162)).toBe(false);
@@ -157,7 +177,7 @@ describe('season/year filters', () => {
       await createTestAnime({ tmdbId: 10161, title: '2023 Show', firstAirDate: '2023-05-01' });
       await createTestAnime({ tmdbId: 10162, title: '2024 Show', firstAirDate: '2024-05-01' });
 
-      const results = await getRecentlyCachedAnime(10, { year: 2024 });
+      const results = await getRecentlyCachedAnime(1000, { year: 2024 });
 
       expect(results.some((r) => r.tmdb_id === 10162)).toBe(true);
       expect(results.some((r) => r.tmdb_id === 10161)).toBe(false);
@@ -166,7 +186,7 @@ describe('season/year filters', () => {
     it('excludes anime with a null first_air_date when filtering by season', async () => {
       await createTestAnime({ tmdbId: 10161, firstAirDate: null });
 
-      const results = await getRecentlyCachedAnime(10, { season: 'winter' });
+      const results = await getRecentlyCachedAnime(1000, { season: 'winter' });
       expect(results.some((r) => r.tmdb_id === 10161)).toBe(false);
     });
   });
@@ -176,7 +196,9 @@ describe('season/year filters', () => {
       await createTestAnime({ tmdbId: 10161, title: 'Action Show', genres: ['Action & Adventure'] });
       await createTestAnime({ tmdbId: 10162, title: 'Drama Show', genres: ['Drama'] });
 
-      const results = await getRecentlyCachedAnime(10, { genres: ['Action & Adventure'] });
+      // Large limit — these test rows have no first_air_date, so a small
+      // limit is sensitive to unrelated dated rows elsewhere in the DB.
+      const results = await getRecentlyCachedAnime(1000, { genres: ['Action & Adventure'] });
 
       expect(results.some((r) => r.tmdb_id === 10161)).toBe(true);
       expect(results.some((r) => r.tmdb_id === 10162)).toBe(false);

@@ -419,8 +419,13 @@ export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
 /**
  * getRecentlyCachedAnime
  * ----------------------
- * Returns the most recently cached anime rows, newest first.
- * Useful for a "recently added" feed on the frontend.
+ * Returns anime rows ordered by release/air date, newest first (NULLs —
+ * unknown dates — sort last). Despite the name (kept for now to limit
+ * churn — only this file, its route, and its own test file reference it),
+ * this sorts by first_air_date, not cached_at: a title cached into the DB
+ * recently but released long ago (e.g. Spirited Away) should not outrank a
+ * title with a newer release date. Powers the frontend's sort control,
+ * relabeled from "Recently Added" to "Newest Release" to match.
  *
  * @param {number} limit  Maximum number of rows to return. Required, must be >= 1.
  *
@@ -454,7 +459,7 @@ export async function getRecentlyCachedAnime(limit, filters = {}) {
     LEFT JOIN reviews r ON r.anime_id = a.id
     WHERE 1=1 ${advancedFilter}
     GROUP BY a.id
-    ORDER BY a.cached_at DESC
+    ORDER BY a.first_air_date DESC NULLS LAST
     LIMIT $1`,
     params
   );
@@ -463,7 +468,7 @@ export async function getRecentlyCachedAnime(limit, filters = {}) {
 }
 
 
-// search by title 
+// search by title
 /**
  * searchAnimeByTitle
  * ------------------

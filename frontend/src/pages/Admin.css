@@ -195,6 +195,93 @@
   word-break: break-word;
 }
 
+/* ── Add a Show ──────────────────────────────────────────────────────────── */
+.admin__add-show-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin__add-show-form .admin__search {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin__add-show-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin__add-show-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.admin__add-show-poster {
+  width: 46px;
+  height: 69px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-border);
+}
+
+.admin__add-show-poster--empty {
+  background: var(--color-border);
+}
+
+.admin__add-show-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin__add-show-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.admin__add-show-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.admin__add-show-season {
+  margin-top: 2px;
+  width: 160px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-text-tertiary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+.admin__add-show-season:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+.admin__add-show-result {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.admin__add-show-result--error {
+  color: var(--color-danger);
+}
+
 .admin__btn {
   border: none;
   border-radius: var(--radius-md);

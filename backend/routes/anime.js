@@ -294,4 +294,64 @@ export async function fetchFromTmdb(tmdbId, tmdbType, seasonNumber = null) {
   };
 }
 
+const SEARCH_RESULTS_LIMIT = 8;
+
+function toYear(dateStr) {
+  return dateStr ? new Date(dateStr).getFullYear() : null;
+}
+
+function toCandidate(result, mediaType) {
+  return {
+    id: result.id,
+    title: mediaType === 'movie' ? result.title : result.name,
+    year: toYear(mediaType === 'movie' ? result.release_date : result.first_air_date),
+    posterPath: result.poster_path ?? null,
+    mediaType,
+  };
+}
+
+/**
+ * searchTmdbCandidates
+ * --------------------
+ * Admin "add a show" lookup helper — not gated by the anime keyword the way
+ * fetchFromTmdb is, since this only previews candidates for a human to pick
+ * from; the actual anime/adult checks still happen when POST /fetch/:tmdbId
+ * is called to add the pick.
+ *
+ * A purely numeric query is treated as a direct TMDB id lookup (tries /tv
+ * first, falls back to /movie) instead of a title search, so admins can
+ * paste a raw id and get a single confirm-candidate back.
+ */
+export async function searchTmdbCandidates(query) {
+  const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
+  const apiKey = process.env.TMDB_API_KEY;
+
+  if (!apiKey) throw new Error('TMDB_API_KEY is not set');
+
+  if (/^\d+$/.test(query)) {
+    try {
+      const data = await tmdbFetch(`${TMDB_BASE_URL}/tv/${query}?language=en-US`, apiKey);
+      return data.adult ? [] : [toCandidate(data, 'tv')];
+    } catch (err) {
+      if (err.message !== 'TMDB_NOT_FOUND') throw err;
+    }
+    try {
+      const data = await tmdbFetch(`${TMDB_BASE_URL}/movie/${query}?language=en-US`, apiKey);
+      return data.adult ? [] : [toCandidate(data, 'movie')];
+    } catch (err) {
+      if (err.message === 'TMDB_NOT_FOUND') return [];
+      throw err;
+    }
+  }
+
+  const data = await tmdbFetch(
+    `${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=1`,
+    apiKey
+  );
+  return (data.results ?? [])
+    .filter(r => (r.media_type === 'tv' || r.media_type === 'movie') && r.adult !== true)
+    .slice(0, SEARCH_RESULTS_LIMIT)
+    .map(r => toCandidate(r, r.media_type));
+}
+
 export default router;

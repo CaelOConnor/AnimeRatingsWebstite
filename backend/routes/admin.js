@@ -5,6 +5,7 @@ import { getReviewById, deleteReview } from '../db/reviews.js';
 import { getCommentById, deleteComment } from '../db/comments.js';
 import { getUsersByRole, getBannedUsers, getRecentReviews, getReports, dismissAllReportsForUser, getAllFeedback } from '../db/admin.js';
 import { resolveFeedback } from '../db/feedback.js';
+import { searchTmdbCandidates } from './anime.js';
 import { denylistAllUserTokens } from '../services/redis.js';
 
 const router = Router();
@@ -46,6 +47,28 @@ const ADMIN_USER_FIELDS = (u) => ({
   role_type:  u.role_type,
   is_banned:  u.is_banned,
   created_at: u.created_at,
+});
+
+// ── GET /api/admin/anime/search ───────────────────────────────────────────────
+// Admin only. Looks up TMDB candidates for the "add a show" quick-add UI —
+// a numeric query is treated as a direct tv/movie id lookup, anything else
+// is a title search. Does not add anything; POST /api/anime/fetch/:tmdbId
+// (already existing, unchanged) does the actual add once an admin picks one.
+
+router.get('/anime/search', requireAuth, requireAdmin, async (req, res) => {
+  const rawQuery = req.query.query;
+
+  if (typeof rawQuery !== 'string' || rawQuery.trim() === '') {
+    return res.status(400).json({ error: 'query is required.' });
+  }
+
+  try {
+    const candidates = await searchTmdbCandidates(rawQuery.trim());
+    res.json(candidates);
+  } catch (err) {
+    console.error('[GET /api/admin/anime/search]', err);
+    res.status(500).json({ error: 'Failed to search TMDB.' });
+  }
 });
 
 // ── GET /api/admin/users ──────────────────────────────────────────────────────

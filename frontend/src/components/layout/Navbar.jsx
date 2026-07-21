@@ -30,8 +30,10 @@ function HomeButton() {
 }
 
 // Available ways to sort the anime list.
+// 'recent' now sorts by release/air date (newest first) rather than when the
+// row was cached into our DB — labeled "Newest Release" to match.
 const SORT_OPTIONS = [
-  { value: 'recent',    label: 'Recently Added' },
+  { value: 'recent',    label: 'Newest Release' },
   { value: 'top_rated', label: 'Top Rated' },
 ];
 
