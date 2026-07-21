@@ -292,6 +292,40 @@ describe('PATCH /api/users/:id', () => {
     expect(res.status).toBe(409);
   });
 
+  it('returns 200 when username is unchanged (no-op update)', async () => {
+    const res = await request
+      .patch(`/api/users/${user.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ username: user.username });
+
+    expect(res.status).toBe(200);
+    expect(res.body.username).toBe(user.username);
+  });
+
+  it('trims leading/trailing whitespace from username', async () => {
+    const res = await request
+      .patch(`/api/users/${user.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ username: `  ${user.username}  ` });
+
+    expect(res.status).toBe(200);
+    expect(res.body.username).toBe(user.username);
+  });
+
+  it('updates username and bio together in the same request', async () => {
+    const res = await request
+      .patch(`/api/users/${user.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ username: 'combo_update_username', bio: 'Updated in the same request.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.username).toBe('combo_update_username');
+    expect(res.body.bio).toBe('Updated in the same request.');
+
+    // keep state consistent for remaining tests
+    user.username = res.body.username;
+  });
+
   it('returns 401 when no token is provided', async () => {
     const res = await request
       .patch(`/api/users/${user.id}`)

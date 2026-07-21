@@ -77,6 +77,14 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
+  // ── updateUser ───────────────────────────────────────────────────────────────
+  // Merge partial fields (e.g. a new username) into the current user, so
+  // components reading user from context (like the Navbar) re-render with
+  // fresh data immediately, without waiting for a login/reload/`/me` refetch.
+  const updateUser = useCallback((fields) => {
+    setUser((prev) => (prev ? { ...prev, ...fields } : prev));
+  }, []);
+
   // ── logout ───────────────────────────────────────────────────────────────────
   // Log the user out and remove their authentication data.
   const logout = useCallback(async () => {
@@ -104,6 +112,7 @@ export function AuthProvider({ children }) {
     register,
     login,
     logout,
+    updateUser,
   };
 
   // Provide authentication information to every component wrapped inside AuthProvider.

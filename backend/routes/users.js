@@ -150,7 +150,7 @@ router.post('/:id/avatar', authenticateToken, upload.single('avatar'), async (re
 });
 
 // ── PATCH /api/users/:id ──────────────────────────────────────────────────────
-// Auth required. Owner only. Updatable fields: bio, avatar_url (string).
+// Auth required. Owner only. Updatable fields: username, bio, avatar_url (string).
 
 router.patch('/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
@@ -163,8 +163,19 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden.' });
   }
 
-  const { bio, avatar_url } = req.body;
+  const { username, bio, avatar_url } = req.body;
   const updates = {};
+
+  if (username !== undefined) {
+    if (typeof username !== 'string' || username.trim() === '') {
+      return res.status(400).json({ error: 'username must be a non-empty string.' });
+    }
+    const trimmed = username.trim();
+    if (trimmed.length < 2 || trimmed.length > 30) {
+      return res.status(400).json({ error: 'Username must be between 2 and 30 characters.' });
+    }
+    updates.username = trimmed;
+  }
 
   if (bio !== undefined) {
     if (bio !== null && typeof bio !== 'string') {
@@ -193,6 +204,9 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     const updated = await updateUser(id, updates);
     res.json(PUBLIC_FIELDS(updated));
   } catch (err) {
+    if (err.message === 'Username is already taken') {
+      return res.status(409).json({ error: err.message });
+    }
     console.error('[PATCH /api/users/:id]', err);
     res.status(500).json({ error: 'Failed to update user.' });
   }

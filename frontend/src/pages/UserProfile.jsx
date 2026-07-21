@@ -132,7 +132,7 @@ export default function UserProfile() {
   // Get the user ID from the URL and authentication information for the currently logged-in user.
   const { id }     = useParams();
   const navigate   = useNavigate();
-  const { user: authUser } = useAuth();
+  const { user: authUser, updateUser: updateAuthUser } = useAuth();
   const fileInputRef = useRef(null);
 
   const isSelf  = authUser?.id === id;
@@ -146,11 +146,12 @@ export default function UserProfile() {
   const [error,     setError]     = useState(null);
   const [tab,       setTab]       = useState('reviews');
 
-  // State used when editing the user's bio.
-  const [bio,        setBio]        = useState('');
-  const [bioSaving,  setBioSaving]  = useState(false);
-  const [bioError,   setBioError]   = useState(null);
-  const [bioSuccess, setBioSuccess] = useState(false);
+  // State used when editing the user's username and bio together (one form, one save action).
+  const [usernameInput, setUsernameInput] = useState('');
+  const [bio,            setBio]          = useState('');
+  const [profileSaving,  setProfileSaving] = useState(false);
+  const [profileError,   setProfileError]  = useState(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
   // State used while uploading a new profile picture.
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -172,6 +173,7 @@ export default function UserProfile() {
           api.get(`/api/users/${id}/watchlist`),
         ]);
         setUser(userData);
+        setUsernameInput(userData.username);
         setBio(userData.bio ?? '');
         setReviews(reviewsData);
         setWatchlist(watchlistData);
@@ -219,20 +221,33 @@ export default function UserProfile() {
     }
   }
 
-  // Save changes made to the user's biography.
-  async function handleBioSave() {
-    setBioSaving(true);
-    setBioError(null);
-    setBioSuccess(false);
+  // Save changes made to the user's username and bio together, in one request.
+  async function handleProfileSave() {
+    const trimmedUsername = usernameInput.trim();
+    if (!trimmedUsername) {
+      setProfileError('Username cannot be empty.');
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSuccess(false);
     try {
-      const updated = await api.patch(`/api/users/${id}`, { bio: bio.trim() || null });
-      setUser((prev) => ({ ...prev, bio: updated.bio }));
-      setBioSuccess(true);
-      setTimeout(() => setBioSuccess(false), 2500);
+      const updated = await api.patch(`/api/users/${id}`, {
+        username: trimmedUsername,
+        bio: bio.trim() || null,
+      });
+      setUser((prev) => ({ ...prev, username: updated.username, bio: updated.bio }));
+      setUsernameInput(updated.username);
+      // Keep the Navbar (reads username from AuthContext) in sync immediately,
+      // rather than waiting for a reload or the next /me refetch.
+      updateAuthUser({ username: updated.username });
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 2500);
     } catch (err) {
-      setBioError(err.message || 'Failed to save bio.');
+      setProfileError(err.message || 'Failed to save profile.');
     } finally {
-      setBioSaving(false);
+      setProfileSaving(false);
     }
   }
 
@@ -382,10 +397,23 @@ export default function UserProfile() {
               <p className="user-profile__bio">{user.bio}</p>
             )}
 
-            {/* Bio edit (own profile) */}
+            {/* Profile edit — username + bio, saved together in one request (own profile) */}
             {isSelf && (
-              <div className="user-profile__bio-edit">
+              <div className="user-profile__profile-edit">
+                <label className="user-profile__field-label" htmlFor="profile-username">Username</label>
+                <input
+                  id="profile-username"
+                  className="user-profile__username-input"
+                  type="text"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  maxLength={30}
+                  autoComplete="username"
+                />
+
+                <label className="user-profile__field-label" htmlFor="profile-bio">Bio</label>
                 <textarea
+                  id="profile-bio"
                   className="user-profile__bio-input"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
@@ -397,14 +425,14 @@ export default function UserProfile() {
                   <span className="user-profile__bio-count">{bio.length}/300</span>
                   <button
                     className="user-profile__bio-save"
-                    onClick={handleBioSave}
-                    disabled={bioSaving}
+                    onClick={handleProfileSave}
+                    disabled={profileSaving}
                   >
-                    {bioSaving ? 'Saving…' : 'Save bio'}
+                    {profileSaving ? 'Saving…' : 'Save profile'}
                   </button>
                 </div>
-                {bioError   && <p className="user-profile__bio-error">{bioError}</p>}
-                {bioSuccess && <p className="user-profile__bio-success">Bio saved!</p>}
+                {profileError   && <p className="user-profile__bio-error">{profileError}</p>}
+                {profileSuccess && <p className="user-profile__bio-success">Profile saved!</p>}
               </div>
             )}
           </div>

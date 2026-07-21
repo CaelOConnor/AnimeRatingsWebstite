@@ -233,11 +233,41 @@
   white-space: pre-wrap;
 }
 
-/* ── Bio edit ────────────────────────────────────────────────────────────── */
-.user-profile__bio-edit {
+/* ── Profile edit (username + bio) ──────────────────────────────────────── */
+.user-profile__profile-edit {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+
+.user-profile__field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-top: 0.3rem;
+}
+
+.user-profile__field-label:first-child {
+  margin-top: 0;
+}
+
+.user-profile__username-input {
+  width: 100%;
+  height: 2.2rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.user-profile__username-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 .user-profile__bio-input {
