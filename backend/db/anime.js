@@ -263,7 +263,43 @@ async function upsertWholeSeries({
 }
 
 
-// get anime by id 
+/**
+ * ensureWholeSeriesTitleSuffixed
+ * ------------------------------
+ * Called as a side effect after a season-specific fetch succeeds (see
+ * POST /api/anime/fetch/:tmdbId in routes/anime.js). If a whole-series row
+ * (season_number IS NULL) exists for this tmdb_id/tmdb_type and its title
+ * isn't already suffixed, appends " — All Seasons" so it's clear the series
+ * now has season-specific rows split out too.
+ *
+ * Deliberately a no-op for movies (they never have season-specific
+ * siblings) and idempotent — safe to call on every season fetch, cache hit
+ * or not.
+ *
+ * @param {number} tmdbId
+ * @param {'tv'|'movie'} tmdbType
+ * @returns {Promise<object|null>} The updated whole-series row, or null if nothing changed.
+ */
+export async function ensureWholeSeriesTitleSuffixed(tmdbId, tmdbType) {
+  if (tmdbType !== 'tv') return null;
+
+  const result = await query(
+    `UPDATE anime a
+     SET title = title || ' — All Seasons'
+     WHERE a.tmdb_id = $1 AND a.tmdb_type = $2 AND a.season_number IS NULL
+       AND a.title NOT LIKE '%— All Seasons'
+       AND EXISTS (
+         SELECT 1 FROM anime b
+         WHERE b.tmdb_id = a.tmdb_id AND b.tmdb_type = a.tmdb_type AND b.season_number IS NOT NULL
+       )
+     RETURNING *`,
+    [tmdbId, tmdbType]
+  );
+  return result.rows[0] ?? null;
+}
+
+
+// get anime by id
 /**
  * getAnimeById
  * ------------

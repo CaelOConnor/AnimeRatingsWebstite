@@ -104,10 +104,27 @@ describe('fetchFromTmdb', () => {
       const result = await fetchFromTmdb(209867, 'tv');
 
       expect(result.seasonNumber).toBeNull();
-      expect(result.title).toBe("Frieren: Beyond Journey's End");
       expect(result.episodeCount).toBe(28);
       expect(result.firstAirDate).toBe('2023-09-29');
       expect(result.genres).toEqual(['Drama']);
+    });
+
+    // The "— All Seasons" suffix is NOT added here — fetchFromTmdb has no
+    // DB access and can't know whether season-specific siblings exist for
+    // this series. Suffixing is applied conditionally, as a side effect of
+    // a season-specific fetch, in the route layer (see
+    // ensureWholeSeriesTitleSuffixed in db/anime.js and its route-level
+    // tests in animeRouteTest.test.js).
+    it('does not suffix the whole-series title — that is decided at the route layer, not here', async () => {
+      const fetchMock = vi.fn(async (url) => {
+        if (url.includes('/keywords')) return jsonResponse(anieKeywordsBody());
+        return jsonResponse(baseTvBody());
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await fetchFromTmdb(209867, 'tv');
+
+      expect(result.title).toBe("Frieren: Beyond Journey's End");
     });
   });
 

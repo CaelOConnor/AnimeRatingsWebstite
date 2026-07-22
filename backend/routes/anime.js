@@ -7,6 +7,7 @@ import {
   getRecentlyCachedAnime,
   getTopRatedAnime,
   upsertAnime,
+  ensureWholeSeriesTitleSuffixed,
 } from '../db/anime.js';
 
 const router = Router();
@@ -170,12 +171,22 @@ router.post('/fetch/:tmdbId', authenticateToken, async (req, res) => {
   try {
     const cached = await getAnimeByTmdbIdentifiers(tmdbId, tmdbType, seasonNumber);
     if (cached) {
-      return res.json(cached);
+      // Whether the whole-series row should say "All Seasons" can change
+      // over time — a season sibling might get fetched later, or (as with
+      // Vinland Saga in practice) the whole-series row might get (re)fetched
+      // *after* a season sibling already exists. Runs on every fetch, cache
+      // hit or not, and reflects the fix in this response if the row being
+      // returned is the one that just got suffixed.
+      const updated = await ensureWholeSeriesTitleSuffixed(tmdbId, tmdbType);
+      const responseAnime = updated?.id === cached.id ? updated : cached;
+      return res.json(responseAnime);
     }
 
     const tmdbData = await fetchFromTmdb(tmdbId, tmdbType, seasonNumber);
     const anime = await upsertAnime(tmdbData);
-    res.status(201).json(anime);
+    const updated = await ensureWholeSeriesTitleSuffixed(tmdbId, tmdbType);
+    const responseAnime = updated?.id === anime.id ? updated : anime;
+    res.status(201).json(responseAnime);
   } catch (err) {
     if (err.message === 'TMDB_NOT_FOUND') {
       return res.status(404).json({ error: 'Anime not found on TMDB.' });
@@ -257,8 +268,12 @@ export async function fetchFromTmdb(tmdbId, tmdbType, seasonNumber = null) {
 
   // Season-specific overrides: episode count and air date come from the
   // season itself, not the series-aggregate base endpoint. Title gets the
-  // season name appended so two season-cards for the same show don't look
-  // identical in a list.
+  // season name appended so cards for the same show never look identical
+  // in a list. The whole-series row stays bare here — whether it should
+  // say "All Seasons" depends on whether season-specific siblings exist,
+  // which fetchFromTmdb (no DB access) can't know. That's decided in the
+  // route layer via ensureWholeSeriesTitleSuffixed (db/anime.js), applied
+  // as a side effect whenever a season-specific fetch succeeds.
   const title = fetchSeason
     ? `${data.name} — ${seasonData.name || `Season ${seasonNumber}`}`
     : data.name;

@@ -108,12 +108,225 @@ const TV_IDS = [
 
 // Shows that span multiple TMDB seasons, where a specific season (beyond
 // the whole-series row above) should also be cached as its own row.
-// NOTE: Frieren's season 2 isn't in TMDB's data yet as of this writing —
-// TMDB currently only has season 0 (Specials) and season 1 for tmdb_id
-// 209867 (verified directly against TMDB's /tv/209867 seasons array).
-// Add { id: 209867, season: 2 } here once TMDB catalogs it. Auditing the
-// rest of TV_IDS for other multi-season shows is deferred to a later pass.
-const SEASON_ENTRIES = [];
+// NOTE: Frieren (tmdb_id 209867) is NOT here — re-verified live against
+// TMDB's /tv/209867 endpoint: number_of_seasons is genuinely 1. Its
+// `seasons` array lists a "Specials" entry (season 0), but TMDB doesn't
+// count specials toward number_of_seasons, so Frieren is a single-season
+// show and should only ever have the one whole-series row.
+//
+// Full audit of every TV_IDS entry completed — every show below with 2+
+// real seasons (specials/season 0 excluded, same rule as Frieren) is fully
+// represented. Two intentional exclusions found during the audit:
+//   - BOCCHI THE ROCK! season 2 and The Rising of the Shield Hero season 5
+//     are TMDB stubs (0 episodes, no air date) — not aired yet, so skipped
+//     until TMDB has real data for them.
+//   - One Piece's 23 TMDB "seasons" are really story arcs, not broadcast
+//     seasons (13-197 episodes each, most with no air date) — included
+//     anyway per explicit confirmation, but flagged here since it's a very
+//     different shape from every other entry in this list.
+const SEASON_ENTRIES = [
+  { id: 1429,   season: 1 }, // Attack on Titan — Season 1
+  { id: 1429,   season: 2 }, // Attack on Titan — Season 2
+  { id: 1429,   season: 3 }, // Attack on Titan — Season 3
+  { id: 1429,   season: 4 }, // Attack on Titan — The Final Season
+
+  { id: 85937,  season: 1 }, // Demon Slayer — Unwavering Resolve Arc
+  { id: 85937,  season: 2 }, // Demon Slayer — Mugen Train Arc
+  { id: 85937,  season: 3 }, // Demon Slayer — Entertainment District Arc
+  { id: 85937,  season: 4 }, // Demon Slayer — Swordsmith Village Arc
+  { id: 85937,  season: 5 }, // Demon Slayer — Hashira Training Arc
+
+  { id: 63926,  season: 1 }, // One-Punch Man — Season 1
+  { id: 63926,  season: 2 }, // One-Punch Man — Season 2
+  { id: 63926,  season: 3 }, // One-Punch Man — Season 3
+
+  // One Piece — TMDB's 23 "seasons" are story arcs, not broadcast seasons;
+  // included per explicit confirmation despite the very different shape
+  // (huge episode counts, most arcs have no TMDB air date).
+  { id: 37854,  season: 1 },  // East Blue
+  { id: 37854,  season: 2 },  // Whiskey Peak & Little Garden
+  { id: 37854,  season: 3 },  // Drum Island
+  { id: 37854,  season: 4 },  // Alabasta
+  { id: 37854,  season: 5 },  // Dreams!, The Zenny Pirate Crew Sortie!, Beyond the Rainbow
+  { id: 37854,  season: 6 },  // Skypiea
+  { id: 37854,  season: 7 },  // G-8 & Long Ring Long Land
+  { id: 37854,  season: 8 },  // Water Seven
+  { id: 37854,  season: 9 },  // Enies Lobby
+  { id: 37854,  season: 10 }, // Thriller Bark
+  { id: 37854,  season: 11 }, // Sabaody Archipelago
+  { id: 37854,  season: 12 }, // Amazon Lily
+  { id: 37854,  season: 13 }, // Impel Down & Marineford
+  { id: 37854,  season: 14 }, // Fishman Island
+  { id: 37854,  season: 15 }, // Punk Hazard
+  { id: 37854,  season: 16 }, // Dressrosa
+  { id: 37854,  season: 17 }, // Dressrosa (2)
+  { id: 37854,  season: 18 }, // Zou
+  { id: 37854,  season: 19 }, // Whole Cake Island
+  { id: 37854,  season: 20 }, // Levely Arc
+  { id: 37854,  season: 21 }, // Wano Country Arc
+  { id: 37854,  season: 22 }, // Egghead
+  { id: 37854,  season: 23 }, // Elbaph
+
+  { id: 30984,  season: 1 }, // Bleach — Season 1
+  { id: 30984,  season: 2 }, // Bleach — Thousand-Year Blood War
+
+  { id: 46260,  season: 1 }, // Naruto — Season 1
+  { id: 46260,  season: 2 }, // Naruto — Season 2
+  { id: 46260,  season: 3 }, // Naruto — Season 3
+  { id: 46260,  season: 4 }, // Naruto — Season 4
+
+  { id: 46298,  season: 1 }, // Hunter x Hunter (2011) — Season 1
+  { id: 46298,  season: 2 }, // Hunter x Hunter (2011) — Season 2
+  { id: 46298,  season: 3 }, // Hunter x Hunter (2011) — Season 3
+
+  { id: 72636,  season: 1 }, // Made in Abyss — Season 1
+  { id: 72636,  season: 2 }, // Made in Abyss — The Golden City of the Scorching Sun
+
+  { id: 65930,  season: 1 }, // My Hero Academia — Season 1
+  { id: 65930,  season: 2 }, // My Hero Academia — Season 2
+  { id: 65930,  season: 3 }, // My Hero Academia — Season 3
+  { id: 65930,  season: 4 }, // My Hero Academia — Season 4
+  { id: 65930,  season: 5 }, // My Hero Academia — Season 5
+  { id: 65930,  season: 6 }, // My Hero Academia — Season 6
+  { id: 65930,  season: 7 }, // My Hero Academia — Season 7
+  { id: 65930,  season: 8 }, // My Hero Academia — FINAL SEASON
+
+  { id: 46261,  season: 1 }, // Fairy Tail — Season 1
+  { id: 46261,  season: 2 }, // Fairy Tail — Season 2
+  { id: 46261,  season: 3 }, // Fairy Tail — Season 3
+  { id: 46261,  season: 4 }, // Fairy Tail — Season 4
+  { id: 46261,  season: 5 }, // Fairy Tail — Season 5
+  { id: 46261,  season: 6 }, // Fairy Tail — Season 6
+  { id: 46261,  season: 7 }, // Fairy Tail — FAIRY TAIL ZERØ
+  { id: 46261,  season: 8 }, // Fairy Tail — Final Series
+
+  { id: 84669,  season: 1 }, // The Quintessential Quintuplets — Season 1
+  { id: 84669,  season: 2 }, // The Quintessential Quintuplets — Season 2
+
+  { id: 61374,  season: 1 }, // Tokyo Ghoul — Season 1
+  { id: 61374,  season: 2 }, // Tokyo Ghoul — √A
+  { id: 61374,  season: 3 }, // Tokyo Ghoul — :re
+  { id: 61374,  season: 4 }, // Tokyo Ghoul — :re 2nd Season
+
+  { id: 62745,  season: 1 }, // Is It Wrong to Try to Pick Up Girls in a Dungeon? — Season 1
+  { id: 62745,  season: 2 }, // Is It Wrong to Try to Pick Up Girls in a Dungeon? — Season 2
+  { id: 62745,  season: 3 }, // Is It Wrong to Try to Pick Up Girls in a Dungeon? — Season 3
+  { id: 62745,  season: 4 }, // Is It Wrong to Try to Pick Up Girls in a Dungeon? — Season 4
+  { id: 62745,  season: 5 }, // Is It Wrong to Try to Pick Up Girls in a Dungeon? — Season 5
+
+  { id: 120089, season: 1 }, // SPY x FAMILY — Season 1
+  { id: 120089, season: 2 }, // SPY x FAMILY — Season 2
+  { id: 120089, season: 3 }, // SPY x FAMILY — Season 3
+
+  { id: 82684,  season: 1 }, // That Time I Got Reincarnated as a Slime — Season 1
+  { id: 82684,  season: 2 }, // That Time I Got Reincarnated as a Slime — Season 2
+  { id: 82684,  season: 3 }, // That Time I Got Reincarnated as a Slime — Season 3
+  { id: 82684,  season: 4 }, // That Time I Got Reincarnated as a Slime — Season 4
+
+  { id: 45782,  season: 1 }, // Sword Art Online — Season 1
+  { id: 45782,  season: 2 }, // Sword Art Online — II
+  { id: 45782,  season: 3 }, // Sword Art Online — Alicization
+  { id: 45782,  season: 4 }, // Sword Art Online — Alicization: War of Underworld
+
+  { id: 12971,  season: 1 }, // Dragon Ball Z — Saiyan Saga
+  { id: 12971,  season: 2 }, // Dragon Ball Z — Namek Saga
+  { id: 12971,  season: 3 }, // Dragon Ball Z — Frieza Saga
+  { id: 12971,  season: 4 }, // Dragon Ball Z — Androids Saga
+  { id: 12971,  season: 5 }, // Dragon Ball Z — Cell Saga
+  { id: 12971,  season: 6 }, // Dragon Ball Z — Cell Games Saga
+  { id: 12971,  season: 7 }, // Dragon Ball Z — World Tournament Saga
+  { id: 12971,  season: 8 }, // Dragon Ball Z — Majin Buu Saga
+  { id: 12971,  season: 9 }, // Dragon Ball Z — Kid Buu Saga
+
+  { id: 1095,   season: 1 }, // Ghost in the Shell: Stand Alone Complex — Season 1
+  { id: 1095,   season: 2 }, // Ghost in the Shell: Stand Alone Complex — 2nd GIG
+
+  { id: 88803,  season: 1 }, // Vinland Saga — Season 1
+  { id: 88803,  season: 2 }, // Vinland Saga — Season 2
+
+  { id: 94664,  season: 1 }, // Mushoku Tensei: Jobless Reincarnation — Season 1
+  { id: 94664,  season: 2 }, // Mushoku Tensei: Jobless Reincarnation — Season 2
+  { id: 94664,  season: 3 }, // Mushoku Tensei: Jobless Reincarnation — Season 3
+
+  { id: 88046,  season: 1 }, // Fire Force — Season 1
+  { id: 88046,  season: 2 }, // Fire Force — Season 2
+  { id: 88046,  season: 3 }, // Fire Force — Season 3
+
+  { id: 83097,  season: 1 }, // The Promised Neverland — Season 1
+  { id: 83097,  season: 2 }, // The Promised Neverland — Season 2
+
+  { id: 65844,  season: 1 }, // KONOSUBA — Season 1
+  { id: 65844,  season: 2 }, // KONOSUBA — Season 2
+  { id: 65844,  season: 3 }, // KONOSUBA — Season 3
+
+  { id: 62110,  season: 1 }, // Assassination Classroom — Season 1
+  { id: 62110,  season: 2 }, // Assassination Classroom — Season 2
+
+  { id: 64710,  season: 1 }, // Noragami — Season 1
+  { id: 64710,  season: 2 }, // Noragami — Aragoto
+
+  { id: 45783,  season: 1 }, // Kuroko's Basketball — Season 1
+  { id: 45783,  season: 2 }, // Kuroko's Basketball — Season 2
+  { id: 45783,  season: 3 }, // Kuroko's Basketball — Season 3
+
+  { id: 62273,  season: 1 }, // Food Wars! Shokugeki no Soma — Season 1
+  { id: 62273,  season: 2 }, // Food Wars! Shokugeki no Soma — The Second Plate
+  { id: 62273,  season: 3 }, // Food Wars! Shokugeki no Soma — The Third Plate
+  { id: 62273,  season: 4 }, // Food Wars! Shokugeki no Soma — The Fourth Plate
+  { id: 62273,  season: 5 }, // Food Wars! Shokugeki no Soma — The Fifth Plate
+
+  { id: 83121,  season: 1 }, // Kaguya-sama: Love Is War — Season 1
+  { id: 83121,  season: 2 }, // Kaguya-sama: Love Is War — Love Is War?
+  { id: 83121,  season: 3 }, // Kaguya-sama: Love Is War — Ultra Romantic
+
+  // BOCCHI THE ROCK! season 2 is a TMDB stub (0 episodes, no air date) —
+  // skipped until it's actually aired.
+  { id: 119100, season: 1 }, // BOCCHI THE ROCK! — Season 1
+
+  { id: 67075,  season: 1 }, // Mob Psycho 100 — Season 1
+  { id: 67075,  season: 2 }, // Mob Psycho 100 — Season 2
+  { id: 67075,  season: 3 }, // Mob Psycho 100 — Season 3
+
+  { id: 65676,  season: 1 }, // My Teen Romantic Comedy SNAFU — Season 1
+  { id: 65676,  season: 2 }, // My Teen Romantic Comedy SNAFU — TOO!
+  { id: 65676,  season: 3 }, // My Teen Romantic Comedy SNAFU — Climax!
+
+  // The Rising of the Shield Hero season 5 is a TMDB stub (0 episodes, no
+  // air date) — skipped until it's actually aired.
+  { id: 83095,  season: 1 }, // The Rising of the Shield Hero — Season 1
+  { id: 83095,  season: 2 }, // The Rising of the Shield Hero — Season 2
+  { id: 83095,  season: 3 }, // The Rising of the Shield Hero — Season 3
+  { id: 83095,  season: 4 }, // The Rising of the Shield Hero — Season 4
+
+  { id: 85991,  season: 1 }, // Fruits Basket (2019) — Season 1
+  { id: 85991,  season: 2 }, // Fruits Basket (2019) — Season 2
+  { id: 85991,  season: 3 }, // Fruits Basket (2019) — The Final Season
+
+  { id: 43865,  season: 1 }, // Psycho-Pass — Season 1
+  { id: 43865,  season: 2 }, // Psycho-Pass — Season 2
+  { id: 43865,  season: 3 }, // Psycho-Pass — Season 3
+
+  { id: 60863,  season: 1 }, // Haikyuu!! — Season 1
+  { id: 60863,  season: 2 }, // Haikyuu!! — Season 2
+  { id: 60863,  season: 3 }, // Haikyuu!! — Karasuno High School vs Shiratorizawa Academy
+  { id: 60863,  season: 4 }, // Haikyuu!! — TO THE TOP
+
+  { id: 64196,  season: 1 }, // Overlord — Season 1
+  { id: 64196,  season: 2 }, // Overlord — II
+  { id: 64196,  season: 3 }, // Overlord — III
+  { id: 64196,  season: 4 }, // Overlord — IV
+
+  { id: 86031,  season: 1 }, // Dr. STONE — Season 1
+  { id: 86031,  season: 2 }, // Dr. STONE — Stone Wars
+  { id: 86031,  season: 3 }, // Dr. STONE — New World
+  { id: 86031,  season: 4 }, // Dr. STONE — Science Future
+
+  { id: 207784, season: 1 }, // Delicious in Dungeon — Season 1
+  { id: 207784, season: 2 }, // Delicious in Dungeon — Season 2
+
+  { id: 31724,  season: 1 }, // Code Geass: Lelouch of the Rebellion — R1
+  { id: 31724,  season: 2 }, // Code Geass: Lelouch of the Rebellion — R2
+];
 
 // Anime movies — verified individually against TMDB's search + keywords
 // endpoints before being hardcoded (same rule as TV_IDS/SEASON_ENTRIES).

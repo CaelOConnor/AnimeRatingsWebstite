@@ -6,12 +6,19 @@ const { Pool } = pg;
 // pool is multiple connections
 
 // gets all db settings from .env
+const dbName = process.env.NODE_ENV === 'test'
+  ? process.env.DB_NAME_TEST
+  : process.env.DB_NAME;
+
+// Unconditional (not gated behind NODE_ENV==='development' like query()'s
+// per-call logging below) so drift is always visible — this is exactly the
+// line that would have caught this session's dev-DB-wipe bug immediately.
+console.log(`[db] Connecting to database "${dbName}" (NODE_ENV=${process.env.NODE_ENV})`);
+
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
   port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.NODE_ENV === 'test'
-    ? process.env.DB_NAME_TEST
-    : process.env.DB_NAME,
+  database: dbName,
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   max: 10,

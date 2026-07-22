@@ -478,3 +478,67 @@ describe('POST /api/anime/fetch/:tmdbId — season query param', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// POST /api/anime/fetch/:tmdbId — conditional "All Seasons" suffix
+// ---------------------------------------------------------------------------
+
+describe('POST /api/anime/fetch/:tmdbId — conditional "All Seasons" suffix', () => {
+  it('suffixes the whole-series row when fetching an already-cached season sibling', async () => {
+    const tmdbId = makeTmdbId();
+    const wholeSeries = await makeAnime({ tmdbId, title: 'Suffix Test Show', seasonNumber: null });
+    await makeAnime({ tmdbId, title: 'Suffix Test Show — Season 1', seasonNumber: 1 });
+
+    const res = await request
+      .post(`/api/anime/fetch/${tmdbId}`)
+      .query({ season: '1' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+
+    const wholeSeriesRes = await request.get(`/api/anime/${wholeSeries.id}`);
+    expect(wholeSeriesRes.body.title).toBe('Suffix Test Show — All Seasons');
+  });
+
+  it('does not suffix a whole-series row that has no season-specific siblings', async () => {
+    const soloShow = await makeAnime({ title: 'Solo Show No Seasons', seasonNumber: null });
+
+    const res = await request
+      .post(`/api/anime/fetch/${soloShow.tmdb_id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Solo Show No Seasons');
+  });
+
+  it('does not error when fetching a season for a series with no whole-series row yet', async () => {
+    const tmdbId = makeTmdbId();
+    await makeAnime({ tmdbId, title: 'Season Only Show — Season 1', seasonNumber: 1 });
+
+    const res = await request
+      .post(`/api/anime/fetch/${tmdbId}`)
+      .query({ season: '1' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Season Only Show — Season 1');
+  });
+
+  it('suffixes the whole-series row in its own response when fetched after a season sibling already exists', async () => {
+    // Ordering case: the season row was added first (e.g. via a direct
+    // season fetch), and only later does someone fetch the whole-series
+    // row itself. It should come back already suffixed, not stale bare —
+    // this caught a real gap where Vinland Saga's whole-series row was
+    // created bare because its season 2 row already existed.
+    const tmdbId = makeTmdbId();
+    await makeAnime({ tmdbId, title: 'Ordering Test Show — Season 1', seasonNumber: 1 });
+    await makeAnime({ tmdbId, title: 'Ordering Test Show', seasonNumber: null });
+
+    const res = await request
+      .post(`/api/anime/fetch/${tmdbId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Ordering Test Show — All Seasons');
+  });
+});

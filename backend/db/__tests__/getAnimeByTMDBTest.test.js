@@ -6,8 +6,16 @@ import { query } from '../db.js';
 // Shared test data
 // ---------------------------------------------------------------------------
 
+// Dedicated range (10240-10249) — verified against every real id in
+// seed.js's TV_IDS/MOVIE_IDS/SEASON_ENTRIES before picking it. The previous
+// version of this file used `tmdb_id >= 1000` as its cleanup boundary,
+// which matched virtually the entire real catalog (all real TMDB ids in
+// this project are >= 1000) and wiped it when this suite was ever run
+// against the dev DB by mistake.
+const TMDB_ID_BASE = 10240;
+
 const BASE_ANIME = {
-  tmdb_id: 1000,
+  tmdb_id: TMDB_ID_BASE,
   tmdb_type: 'tv',
   season_number: null,
   title: 'Attack on Titan',
@@ -23,8 +31,9 @@ const BASE_ANIME = {
 };
 
 afterEach(async () => {
-  // Clean up all anime inserted during tests
-  await query(`DELETE FROM anime WHERE tmdb_id >= 1000`);
+  // Clean up all anime inserted during tests — scoped to this file's
+  // dedicated range only, never a real-catalog-adjacent boundary.
+  await query('DELETE FROM anime WHERE tmdb_id >= $1 AND tmdb_id < $2', [TMDB_ID_BASE, TMDB_ID_BASE + 10]);
 });
 
 async function createTestAnime(overrides = {}) {
@@ -108,12 +117,12 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('correctly finds a whole series entry when season_number is null', async () => {
     const anime = await createTestAnime({
-      tmdb_id: 1001,
+      tmdb_id: TMDB_ID_BASE + 1,
       season_number: null,
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1001,
+      TMDB_ID_BASE + 1,
       'tv',
       null
     );
@@ -125,13 +134,13 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('correctly finds a season entry when season_number is provided', async () => {
     const anime = await createTestAnime({
-      tmdb_id: 1002,
+      tmdb_id: TMDB_ID_BASE + 2,
       season_number: 1,
       title: 'Attack on Titan Season 1',
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1002,
+      TMDB_ID_BASE + 2,
       'tv',
       1
     );
@@ -143,19 +152,19 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('does not confuse a whole series with a specific season', async () => {
     await createTestAnime({
-      tmdb_id: 1003,
+      tmdb_id: TMDB_ID_BASE + 3,
       season_number: null,
       title: 'Full Series',
     });
 
     await createTestAnime({
-      tmdb_id: 1003,
+      tmdb_id: TMDB_ID_BASE + 3,
       season_number: 1,
       title: 'Season 1',
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1003,
+      TMDB_ID_BASE + 3,
       'tv',
       1
     );
@@ -166,19 +175,19 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('does not confuse tv and movie entries with the same tmdb_id', async () => {
     await createTestAnime({
-      tmdb_id: 1004,
+      tmdb_id: TMDB_ID_BASE + 4,
       tmdb_type: 'tv',
       title: 'TV Version',
     });
 
     await createTestAnime({
-      tmdb_id: 1004,
+      tmdb_id: TMDB_ID_BASE + 4,
       tmdb_type: 'movie',
       title: 'Movie Version',
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1004,
+      TMDB_ID_BASE + 4,
       'movie',
       null
     );
@@ -189,11 +198,11 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('returns all expected anime fields', async () => {
     await createTestAnime({
-      tmdb_id: 1005,
+      tmdb_id: TMDB_ID_BASE + 5,
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1005,
+      TMDB_ID_BASE + 5,
       'tv',
       null
     );
@@ -217,12 +226,12 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('returns genres as an array', async () => {
     await createTestAnime({
-      tmdb_id: 1006,
+      tmdb_id: TMDB_ID_BASE + 6,
       genres: ['Action', 'Fantasy'],
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1006,
+      TMDB_ID_BASE + 6,
       'tv',
       null
     );
@@ -233,11 +242,11 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('returns a single object, not an array', async () => {
     await createTestAnime({
-      tmdb_id: 1007,
+      tmdb_id: TMDB_ID_BASE + 7,
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1007,
+      TMDB_ID_BASE + 7,
       'tv',
       null
     );
@@ -248,17 +257,17 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('returns the correct anime when multiple anime rows exist', async () => {
     await createTestAnime({
-      tmdb_id: 1008,
+      tmdb_id: TMDB_ID_BASE + 8,
       title: 'Naruto',
     });
 
     const target = await createTestAnime({
-      tmdb_id: 1009,
+      tmdb_id: TMDB_ID_BASE + 9,
       title: 'Bleach',
     });
 
     const result = await getAnimeByTmdbIdentifiers(
-      1009,
+      TMDB_ID_BASE + 9,
       'tv',
       null
     );
@@ -275,7 +284,7 @@ describe('getAnimeByTmdbIdentifiers', () => {
 
   it('throws when tmdb_type is missing', async () => {
     await expect(
-      getAnimeByTmdbIdentifiers(1000, undefined, null)
+      getAnimeByTmdbIdentifiers(TMDB_ID_BASE, undefined, null)
     ).rejects.toThrow('tmdbType is required');
   });
 
