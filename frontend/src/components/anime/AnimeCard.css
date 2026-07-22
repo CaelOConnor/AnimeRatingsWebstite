@@ -1,6 +1,7 @@
 .anime-card {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -8,7 +9,7 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .anime-card:hover {
@@ -76,7 +77,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -106,6 +107,6 @@
   border: 1px solid var(--color-border);
   font-size: 10px;
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--color-text-tertiary);
   white-space: nowrap;
 }

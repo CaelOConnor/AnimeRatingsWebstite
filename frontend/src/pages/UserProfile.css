@@ -87,7 +87,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity var(--transition-fast);
 }
 
 .user-profile__admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -97,7 +97,7 @@
   color: var(--color-danger);
 }
 
-.user-profile__admin-btn--ban:hover:not(:disabled) { background: #f5c6c6; }
+.user-profile__admin-btn--ban:hover:not(:disabled) { background: var(--color-danger-hover); }
 
 .user-profile__admin-btn--unban {
   background: var(--color-success-light); 
@@ -111,7 +111,7 @@
   color: var(--color-danger);
 }
 
-.user-profile__admin-btn--delete:hover:not(:disabled) { background: #f5c6c6; }
+.user-profile__admin-btn--delete:hover:not(:disabled) { background: var(--color-danger-hover); }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .user-profile__header {
@@ -139,7 +139,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
   font-weight: 700;
 }
 
@@ -164,13 +164,13 @@
   border-radius: 50%;
   border: 2px solid var(--color-surface);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
   font-size: 0.75rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .user-profile__avatar-edit:hover:not(:disabled) { background: var(--color-accent-dark); }
@@ -213,7 +213,7 @@
   background: var(--color-danger-light); 
   color: var(--color-danger);
   padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -262,7 +262,7 @@
   color: var(--color-text-primary);
   background: var(--color-surface);
   box-sizing: border-box;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 
 .user-profile__username-input:focus {
@@ -281,7 +281,7 @@
   background: var(--color-surface);
   resize: vertical;
   box-sizing: border-box;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 
 .user-profile__bio-input:focus {
@@ -303,13 +303,13 @@
 .user-profile__bio-save {
   padding: 0.35rem 0.9rem;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .user-profile__bio-save:hover:not(:disabled) { background: var(--color-accent-dark); }
@@ -379,12 +379,12 @@
   aspect-ratio: 2/3;
   object-fit: cover;
   border-radius: var(--radius-md);
-  background: #e0dff0;
+  background: var(--color-poster-placeholder);
   display: block;
 }
 
 .user-profile__fav-poster--empty {
-  background: #e0dff0;
+  background: var(--color-poster-placeholder);
 }
 
 .user-profile__fav-rating {
@@ -424,7 +424,7 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .user-profile__tab:hover { color: var(--color-text-primary); }
@@ -459,7 +459,7 @@
   text-decoration: none;
   color: inherit;
   border: 1px solid #ebebf5;
-  transition: box-shadow 0.15s;
+  transition: box-shadow var(--transition-fast);
 }
 
 .user-profile__review-card:hover { box-shadow: 0 2px 12px rgba(124,111,205,0.10); }
@@ -528,7 +528,7 @@
   background: #ebebf5;
   color: var(--color-text-secondary);
   padding: 0.1rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 
 .user-profile__wl-grid {
@@ -551,11 +551,11 @@
   object-fit: cover;
   border-radius: var(--radius-md);
   display: block;
-  background: #e0dff0;
-  transition: opacity 0.15s;
+  background: var(--color-poster-placeholder);
+  transition: opacity var(--transition-fast);
 }
 
-.user-profile__wl-poster--empty { background: #e0dff0; }
+.user-profile__wl-poster--empty { background: var(--color-poster-placeholder); }
 .user-profile__wl-card:hover .user-profile__wl-poster { opacity: 0.85; }
 
 .user-profile__wl-title {
@@ -571,7 +571,7 @@
   display: inline-block;
   padding: 0.5rem 1.2rem;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
   border-radius: var(--radius-md);
   text-decoration: none;
   font-weight: 600;

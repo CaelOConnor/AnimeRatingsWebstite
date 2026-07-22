@@ -1,5 +1,14 @@
 @import './tokens.css';
 
+/* Foundational reset — width/height on any element include their own
+   padding and border instead of adding to them. A few existing fixed-size
+   elements (search input, spinners, small icon buttons) were implicitly
+   relying on content-box and will render a bit smaller now; see the
+   CSS cleanup task notes for the specific list. */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;

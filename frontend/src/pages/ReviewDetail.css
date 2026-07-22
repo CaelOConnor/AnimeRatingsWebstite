@@ -20,7 +20,7 @@
   color: var(--color-accent);
   text-decoration: none;
   margin-bottom: 1.5rem;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .review-detail__back:hover {
@@ -51,7 +51,7 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__username {
@@ -65,16 +65,16 @@
 }
 
 .review-detail__dot {
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__date {
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__edited {
   font-size: 0.78rem;
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
@@ -95,20 +95,20 @@
 .review-detail__rating-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-text-primary);
   line-height: 1;
 }
 
 .review-detail__rating-max {
   font-size: 0.85rem;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
 }
 
 /* ── Anime title link ──────────────────────────────────────────────────────── */
 
 .review-detail__anime-title {
   font-size: 0.85rem;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
   margin: 0 0 1.25rem;
 }
 
@@ -127,20 +127,20 @@
 .review-detail__body {
   font-size: 1rem;
   line-height: 1.7;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-text-primary);
   margin: 0 0 1.5rem;
   white-space: pre-wrap;
 }
 
 .review-detail__body--empty {
   font-style: italic;
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__card-footer {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--color-border, #eee);
+  border-top: 1px solid var(--color-border);
   padding-top: 1.25rem;
   margin-top: 0.5rem;
 }
@@ -156,7 +156,7 @@
 .review-detail__comments-heading {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-text-primary);
   margin: 0 0 1.25rem;
   display: flex;
   align-items: center;
@@ -168,10 +168,10 @@
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
   font-size: 0.75rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   min-width: 1.4rem;
   height: 1.4rem;
   padding: 0 0.4rem;
@@ -179,7 +179,7 @@
 
 .review-detail__comments-empty {
   font-size: 0.9rem;
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
   font-style: italic;
   margin: 0;
 }
@@ -215,19 +215,19 @@
 
 .review-detail__comment-date {
   font-size: 0.8rem;
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__comment-edited {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #aaa);
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
 .review-detail__comment-body {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-text-primary);
   margin: 0 0 0.5rem;
   white-space: pre-wrap;
 }
@@ -244,10 +244,10 @@
   padding: 0;
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-family: inherit;
-  transition: color 0.15s ease;
+  transition: color var(--transition-fast) ease;
 }
 
 .review-detail__action-btn:hover {
@@ -299,15 +299,15 @@
 
 .review-detail__textarea {
   width: 100%;
-  border: 1.5px solid var(--color-border, #e2e2e2);
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   font-family: inherit;
   font-size: 0.9rem;
-  color: var(--color-text, #1a1a1a);
+  color: var(--color-text-primary);
   background: var(--color-bg);
   resize: vertical;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--transition-fast) ease;
   box-sizing: border-box;
 }
 
@@ -329,12 +329,12 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  transition: background var(--transition-fast) ease, opacity var(--transition-fast) ease;
 }
 
 .review-detail__btn--primary {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-on-accent);
 }
 
 .review-detail__btn--primary:hover:not(:disabled) {
@@ -348,8 +348,8 @@
 
 .review-detail__btn--ghost {
   background: transparent;
-  color: var(--color-text-secondary, #666);
-  border: 1.5px solid var(--color-border, #ddd);
+  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-border);
 }
 
 .review-detail__btn--ghost:hover {
@@ -366,7 +366,7 @@
   justify-content: center;
   gap: 1rem;
   min-height: 60vh;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
 }
 
 .review-detail__state--error {
@@ -377,7 +377,7 @@
   display: block;
   width: 2rem;
   height: 2rem;
-  border: 3px solid var(--color-border, #eee);
+  border: 3px solid var(--color-border);
   border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: review-detail-spin 0.7s linear infinite;
@@ -389,7 +389,7 @@
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .review-detail {
     padding: 1.25rem 0.75rem 3rem;
   }

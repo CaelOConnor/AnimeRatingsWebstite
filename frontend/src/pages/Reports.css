@@ -73,7 +73,7 @@
   display: inline-block;
   margin-left: 8px;
   padding: 2px 8px;
-  border-radius: 99px;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -114,7 +114,7 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s;
+  transition: opacity var(--transition-fast);
 }
 
 .reports__btn:disabled {
@@ -128,7 +128,7 @@
 }
 
 .reports__btn--ban:hover:not(:disabled) {
-  background: #F5C6C6;
+  background: var(--color-danger-hover);
 }
 
 .reports__btn--dismiss {
@@ -137,5 +137,5 @@
 }
 
 .reports__btn--dismiss:hover:not(:disabled) {
-  background: #E2E0F0;
+  background: var(--color-border);
 }

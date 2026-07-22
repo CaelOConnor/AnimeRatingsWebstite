@@ -14,7 +14,14 @@
   margin: 0 auto;
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* auto/auto (not 1fr/1fr) — the left (logo) and right (account buttons)
+     columns each get exactly what their own content needs instead of an
+     even 50/50 split. The right column can be 4-5x wider than the left
+     one (logged-in users see several nowrap buttons), so an even split
+     was squeezing it well below its actual content width; the search/sort
+     group in the middle absorbs whatever space is left instead (it's
+     already centered via .navbar__mid, so extra slack there is invisible). */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 16px;
   padding: 0 24px;
@@ -23,18 +30,21 @@
 .navbar__left {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .navbar__mid {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
 }
 
 .navbar__right {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 /* Logo */
@@ -44,7 +54,7 @@
   gap: 7px;
   font-size: 15px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-on-accent);
   text-decoration: none;
   letter-spacing: -0.01em;
 }
@@ -70,7 +80,7 @@
   cursor: pointer;
   text-decoration: none;
   border: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .navbar__btn--ghost {
@@ -86,9 +96,9 @@
 }
 
 .navbar__btn--solid {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-accent);
-  border: 1px solid #fff;
+  border: 1px solid var(--color-surface);
   font-weight: 600;
 }
 
@@ -96,6 +106,8 @@
 .navbar__auth-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 6px;
   gap: 8px;
 }
 
@@ -121,7 +133,10 @@
 .navbar__account-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 6px;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .navbar__account-group .navbar__account-btn {
@@ -133,7 +148,7 @@
   height: 22px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: var(--color-text-on-accent);
   font-size: 11px;
   font-weight: 700;
   display: flex;
@@ -173,7 +188,7 @@
   font-size: 13px;
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 
 .navbar__search-input:focus {
@@ -209,7 +224,7 @@
   font-size: 13px;
   font-family: var(--font-sans);
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   cursor: pointer;
   text-align: left;
   transition: background 0.1s;
@@ -227,4 +242,64 @@
 .navbar__sort-option svg {
   flex-shrink: 0;
   color: var(--color-accent);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 640px) {
+  /* The grid's fixed-width search input plus several white-space: nowrap
+     buttons (logged-in users see "Request a show" / "Report a bug" / the
+     account link / "Log out") add up to far more than a phone screen's
+     width. Left/mid/right can't shrink below that content, so the whole
+     grid — and with it the whole page — was forced wider than the
+     viewport. Stack the three sections into rows instead of columns so
+     each one gets the full width to wrap within. */
+  .navbar {
+    height: auto;
+  }
+
+  .navbar__inner {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    row-gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .navbar__left,
+  .navbar__mid,
+  .navbar__right {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .navbar__search-group {
+    width: 100%;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .navbar__search-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navbar__search-input {
+    /* Global box-sizing: border-box (index.css) already keeps this from
+       overflowing its row at width: 100% — no local override needed here. */
+    width: 100%;
+  }
+
+  /* Explicit min-width: 0 (not just flex-wrap) — these are flex containers
+     nested inside another flex container (.navbar__right/.navbar__mid),
+     itself a single-column CSS Grid item. A wrapping flex container's
+     "automatic minimum size" is supposed to shrink to its widest single
+     child per spec, but that multi-level grid > flex > flex intrinsic-size
+     chain is exactly the kind of nesting real browsers are inconsistent
+     about — so shrinking is forced explicitly instead of relying on it. */
+  .navbar__account-group,
+  .navbar__auth-group {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
 }

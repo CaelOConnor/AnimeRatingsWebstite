@@ -1,6 +1,12 @@
 /* ============================================================
    ShowRater Design Tokens
    Change anything here and it updates everywhere in the app.
+
+   Canonical breakpoints (CSS custom properties can't be used inside
+   @media conditions, so these are documented here rather than tokenized —
+   keep any new responsive CSS on these same literal numbers):
+     640px — the standard mobile breakpoint (nav, page layouts)
+     480px / 700px / 960px — AnimeGrid's column-count scale
    ============================================================ */
 
 :root {
@@ -9,7 +15,6 @@
   --color-accent-dark:     #5C4FB5;   /* navbar border, deeper hover */
   --color-accent-hover:    #6A5DC0;   /* button hover */
   --color-accent-light:    #EDE9FF;   /* pale tint for backgrounds */
-  --color-accent-text:     #ffffff;   /* text on top of accent bg */
 
   /* ── Navbar (inverted) ── */
   --color-navbar-bg:         #7C6FCD;          /* same as accent */
@@ -33,15 +38,19 @@
   --color-text-primary:    #1A1830;
   --color-text-secondary:  #6B6880;
   --color-text-tertiary:   #A09DB8;
-  --color-text-on-accent:  #FFFFFF;
+  --color-text-on-accent:  #FFFFFF;   /* text/icons on top of accent or accent-dark backgrounds */
 
   /* ── Semantic ── */
   --color-danger:          #B3261E;
   --color-danger-light:    #FDECEC;
+  --color-danger-hover:    #F5C6C6;   /* danger button hover background */
   --color-success:         #1E7A34;
   --color-success-light:   #E6F4EA;
   --color-warning:         #92600A;
   --color-warning-light:   #FCEFD9;
+
+  /* ── Misc UI ── */
+  --color-poster-placeholder: #E0DFF0; /* fallback poster/avatar background */
 
   /* ── Shape ── */
   --radius-sm:   6px;
@@ -51,12 +60,16 @@
   --radius-full: 9999px;
 
   /* ── Shadows ── */
-  --shadow-sm:  0 1px 3px rgba(100, 90, 160, 0.08);
-  --shadow-md:  0 4px 16px rgba(100, 90, 160, 0.12);
-  --shadow-lg:  0 8px 32px rgba(100, 90, 160, 0.16);
+  --shadow-sm:          0 1px 3px rgba(100, 90, 160, 0.08);
+  --shadow-md:          0 4px 16px rgba(100, 90, 160, 0.12);
+  --shadow-lg:          0 8px 32px rgba(100, 90, 160, 0.16);
+  --shadow-focus-ring:  0 0 0 3px rgba(124, 111, 205, 0.15);
 
   /* ── Navbar ── */
   --navbar-height: 56px;
+
+  /* ── Motion ── */
+  --transition-fast: 0.15s;
 
   /* ── Typography ── */
   --font-sans: 'DM Sans', system-ui, sans-serif;
