@@ -13,3 +13,8 @@
   font-size: 14px;
   margin-bottom: 24px;
 }
+
+/* Invisible marker observed to trigger loading the next page of results. */
+.home__sentinel {
+  height: 1px;
+}

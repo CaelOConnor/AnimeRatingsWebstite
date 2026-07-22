@@ -12,6 +12,10 @@ import {
 
 const router = Router();
 
+// Batch size shared by /browse and /search pagination — reusing the value
+// that was already the (previously unintentional) hard cap on /browse.
+const BATCH_SIZE = 50;
+
 const VALID_BROWSE_MODES = new Set(['top_rated', 'recent']);
 const TMDB_ANIME_KEYWORD_ID = 210024;
 
@@ -71,6 +75,38 @@ function parseAnimeFilters(query) {
   return { filters };
 }
 
+/**
+ * parseOffset
+ * -----------
+ * Validates the optional `offset` query param shared by /search and
+ * /browse. Defaults to 0. Returns { offset } on success or { error } with a
+ * user-facing message.
+ */
+function parseOffset(query) {
+  if (query.offset === undefined) {
+    return { offset: 0 };
+  }
+  const raw = String(query.offset).trim();
+  if (!/^\d+$/.test(raw)) {
+    return { error: 'offset must be a non-negative integer.' };
+  }
+  return { offset: parseInt(raw, 10) };
+}
+
+/**
+ * paginate
+ * --------
+ * Given rows fetched with a limit of BATCH_SIZE + 1, splits them into the
+ * page to return and whether more rows exist beyond it — avoiding a
+ * separate COUNT query.
+ */
+function paginate(rows) {
+  return {
+    results: rows.slice(0, BATCH_SIZE),
+    hasMore: rows.length > BATCH_SIZE,
+  };
+}
+
 // ── GET /api/anime/search?q= ──────────────────────────────────────────────────
 router.get('/search', async (req, res) => {
   const { q } = req.query;
@@ -84,9 +120,14 @@ router.get('/search', async (req, res) => {
     return res.status(400).json({ error });
   }
 
+  const { offset, error: offsetError } = parseOffset(req.query);
+  if (offsetError) {
+    return res.status(400).json({ error: offsetError });
+  }
+
   try {
-    const results = await searchAnimeByTitle(q.trim(), filters);
-    res.json(results);
+    const rows = await searchAnimeByTitle(q.trim(), filters, BATCH_SIZE + 1, offset);
+    res.json(paginate(rows));
   } catch (err) {
     console.error('[GET /api/anime/search]', err);
     res.status(500).json({ error: 'Failed to search anime.' });
@@ -108,16 +149,26 @@ router.get('/browse', async (req, res) => {
     return res.status(400).json({ error });
   }
 
-  try {
-    let results = mode === 'recent'
-      ? await getRecentlyCachedAnime(50, filters)
-      : await getTopRatedAnime(50, null, filters);
+  const { offset, error: offsetError } = parseOffset(req.query);
+  if (offsetError) {
+    return res.status(400).json({ error: offsetError });
+  }
 
-    if (results.length === 0 && mode === 'top_rated') {
-      results = await getRecentlyCachedAnime(50, filters);
+  try {
+    let effectiveMode = mode;
+    let rows = mode === 'recent'
+      ? await getRecentlyCachedAnime(BATCH_SIZE + 1, filters, offset)
+      : await getTopRatedAnime(BATCH_SIZE + 1, null, filters, offset);
+
+    // Only re-check the "nothing reviewed yet" fallback on the first page —
+    // on later pages an empty top_rated result just means pagination has
+    // reached the end of a real (non-empty) top_rated list.
+    if (rows.length === 0 && mode === 'top_rated' && offset === 0) {
+      rows = await getRecentlyCachedAnime(BATCH_SIZE + 1, filters, offset);
+      effectiveMode = 'recent';
     }
 
-    res.json(results);
+    res.json({ ...paginate(rows), mode: effectiveMode });
   } catch (err) {
     console.error('[GET /api/anime/browse]', err);
     res.status(500).json({ error: 'Failed to fetch anime.' });

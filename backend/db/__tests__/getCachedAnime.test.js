@@ -114,6 +114,48 @@ describe('getRecentlyCachedAnime', () => {
     });
   });
 
+  describe('offset', () => {
+    it('skips the first N rows when offset is provided', async () => {
+      await query(
+        `INSERT INTO anime (id, tmdb_id, tmdb_type, title, genres, first_air_date, cached_at)
+         VALUES
+           (uuid_generate_v4(), 10161, 'tv', 'Oldest', '{}', '2020-01-01', NOW()),
+           (uuid_generate_v4(), 10162, 'tv', 'Middle', '{}', '2022-01-01', NOW()),
+           (uuid_generate_v4(), 10163, 'tv', 'Newest', '{}', '2024-01-01', NOW())`
+      );
+
+      const firstPage = await getRecentlyCachedAnime(1, {}, 0);
+      const secondPage = await getRecentlyCachedAnime(1, {}, 1);
+
+      expect(firstPage[0].title).toBe('Newest');
+      expect(secondPage[0].title).toBe('Middle');
+    });
+
+    it('defaults to offset 0 when omitted', async () => {
+      await createTestAnime({ tmdbId: 10161 });
+
+      const withDefault = await getRecentlyCachedAnime(1000);
+      const withExplicitZero = await getRecentlyCachedAnime(1000, {}, 0);
+
+      expect(withDefault.map((r) => r.id)).toEqual(withExplicitZero.map((r) => r.id));
+    });
+
+    it('returns an empty array when offset is beyond the result set', async () => {
+      await createTestAnime({ tmdbId: 10161 });
+
+      const results = await getRecentlyCachedAnime(1000, {}, 99999);
+      expect(results).toEqual([]);
+    });
+
+    it('throws if offset is negative', async () => {
+      await expect(getRecentlyCachedAnime(10, {}, -1)).rejects.toThrow();
+    });
+
+    it('throws if offset is not an integer', async () => {
+      await expect(getRecentlyCachedAnime(10, {}, 1.5)).rejects.toThrow();
+    });
+  });
+
   describe('return shape', () => {
     it('returns all expected columns', async () => {
       await createTestAnime({ tmdbId: 10161 });

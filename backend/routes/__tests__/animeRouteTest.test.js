@@ -79,9 +79,10 @@ describe('GET /api/anime/search', () => {
       .query({ q: 'Attack' });
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.results)).toBe(true);
+    expect(typeof res.body.hasMore).toBe('boolean');
 
-    const titles = res.body.map((a) => a.title);
+    const titles = res.body.results.map((a) => a.title);
     expect(titles).toContain('Attack on Titan');
     expect(titles).toContain('Attack on Beetles');
   });
@@ -92,7 +93,7 @@ describe('GET /api/anime/search', () => {
       .query({ q: 'Attack' });
 
     expect(res.status).toBe(200);
-    const titles = res.body.map((a) => a.title);
+    const titles = res.body.results.map((a) => a.title);
     expect(titles).not.toContain('Fullmetal Alchemist');
   });
 
@@ -102,7 +103,8 @@ describe('GET /api/anime/search', () => {
       .query({ q: 'zzznomatchzzz' });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
+    expect(res.body.results).toEqual([]);
+    expect(res.body.hasMore).toBe(false);
   });
 
   it('returns the correct fields on each result', async () => {
@@ -111,9 +113,9 @@ describe('GET /api/anime/search', () => {
       .query({ q: 'Fullmetal' });
 
     expect(res.status).toBe(200);
-    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.results.length).toBeGreaterThanOrEqual(1);
 
-    const anime = res.body[0];
+    const anime = res.body.results[0];
     expect(anime).toMatchObject({
       title: 'Fullmetal Alchemist',
     });
@@ -142,8 +144,75 @@ describe('GET /api/anime/search', () => {
       .query({ q: 'attack on titan' });
 
     expect(res.status).toBe(200);
-    const titles = res.body.map((a) => a.title);
+    const titles = res.body.results.map((a) => a.title);
     expect(titles).toContain('Attack on Titan');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/anime/search — pagination
+// ---------------------------------------------------------------------------
+
+describe('GET /api/anime/search — pagination', () => {
+  const PAGE_TMDB_BASE = 88600;
+  let pageAnime;
+
+  beforeAll(async () => {
+    pageAnime = await Promise.all(
+      Array.from({ length: 55 }, (_, i) =>
+        makeAnime({
+          tmdbId: PAGE_TMDB_BASE + i,
+          title: `Pagination Search Show ${String(i).padStart(2, '0')}`,
+        })
+      )
+    );
+  });
+
+  afterAll(async () => {
+    await query('DELETE FROM anime WHERE tmdb_id >= $1 AND tmdb_id < $2', [PAGE_TMDB_BASE, PAGE_TMDB_BASE + 100]);
+  });
+
+  it('returns a batch of 50 with hasMore true when more than 50 rows match', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Pagination Search Show' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.results.length).toBe(50);
+    expect(res.body.hasMore).toBe(true);
+  });
+
+  it('returns the next batch with no overlap when offset is provided', async () => {
+    const first = await request
+      .get('/api/anime/search')
+      .query({ q: 'Pagination Search Show' });
+    const second = await request
+      .get('/api/anime/search')
+      .query({ q: 'Pagination Search Show', offset: 50 });
+
+    expect(second.status).toBe(200);
+    expect(second.body.results.length).toBe(5);
+    expect(second.body.hasMore).toBe(false);
+
+    const firstIds = new Set(first.body.results.map((a) => a.id));
+    const overlap = second.body.results.filter((a) => firstIds.has(a.id));
+    expect(overlap).toHaveLength(0);
+  });
+
+  it('returns 400 for a negative offset', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Pagination Search Show', offset: '-1' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a non-integer offset', async () => {
+    const res = await request
+      .get('/api/anime/search')
+      .query({ q: 'Pagination Search Show', offset: 'abc' });
+
+    expect(res.status).toBe(400);
   });
 });
 
@@ -156,16 +225,17 @@ describe('GET /api/anime/browse', () => {
     const res = await request.get('/api/anime/browse');
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.results)).toBe(true);
+    expect(typeof res.body.hasMore).toBe('boolean');
   });
 
   it('returns the correct fields on each result', async () => {
     const res = await request.get('/api/anime/browse');
 
     expect(res.status).toBe(200);
-    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.results.length).toBeGreaterThanOrEqual(1);
 
-    const anime = res.body[0];
+    const anime = res.body.results[0];
     expect(anime.id).toBeDefined();
     expect(anime.title).toBeDefined();
     expect(anime.tmdb_id).toBeDefined();
@@ -178,7 +248,7 @@ describe('GET /api/anime/browse', () => {
       .query({ mode: 'top_rated' });
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.results)).toBe(true);
   });
 
   it('accepts a mode=recent query param', async () => {
@@ -187,13 +257,123 @@ describe('GET /api/anime/browse', () => {
       .query({ mode: 'recent' });
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.results)).toBe(true);
   });
 
   it('returns 400 for an invalid mode value', async () => {
     const res = await request
       .get('/api/anime/browse')
       .query({ mode: 'invalid_mode' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('reports mode: "recent" when top_rated falls back due to no reviewed anime', async () => {
+    // Scoped to a year no fixture anywhere in the suite would plausibly use,
+    // so top_rated is guaranteed empty regardless of unrelated review data
+    // that may exist elsewhere in the shared test DB.
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'top_rated', year: '1901' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.mode).toBe('recent');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/anime/browse — pagination
+// ---------------------------------------------------------------------------
+
+describe('GET /api/anime/browse — pagination', () => {
+  const PAGE_TMDB_BASE = 88500;
+  const FILTERED_GENRE_COUNT = 3;
+
+  beforeAll(async () => {
+    await Promise.all(
+      Array.from({ length: 55 }, (_, i) =>
+        makeAnime({
+          tmdbId: PAGE_TMDB_BASE + i,
+          title: `Pagination Browse Show ${String(i).padStart(2, '0')}`,
+          firstAirDate: `2024-01-${String((i % 27) + 1).padStart(2, '0')}`,
+          genres: i < FILTERED_GENRE_COUNT ? ['Documentary'] : [],
+        })
+      )
+    );
+  });
+
+  afterAll(async () => {
+    await query('DELETE FROM anime WHERE tmdb_id >= $1 AND tmdb_id < $2', [PAGE_TMDB_BASE, PAGE_TMDB_BASE + 100]);
+  });
+
+  it('returns a batch of 50 with hasMore true when more than 50 rows exist', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.results.length).toBe(50);
+    expect(res.body.hasMore).toBe(true);
+  });
+
+  it('returns the next batch with no overlap when offset is provided', async () => {
+    const first = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent' });
+    const second = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', offset: 50 });
+
+    expect(second.status).toBe(200);
+
+    const firstIds = new Set(first.body.results.map((a) => a.id));
+    const overlap = second.body.results.filter((a) => firstIds.has(a.id));
+    expect(overlap).toHaveLength(0);
+  });
+
+  it('eventually reaches hasMore: false when paginating to the end', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', offset: 50 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.hasMore).toBe(false);
+    expect(res.body.results.length).toBeGreaterThan(0);
+  });
+
+  it('combines pagination with an active filter, scoping offset to the filtered set', async () => {
+    // Only FILTERED_GENRE_COUNT of the 55 fixtures carry this genre — the
+    // filter must be applied to the whole catalog before paging, not to
+    // whatever page would have been returned unfiltered.
+    const firstPage = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', genre: 'Documentary' });
+
+    expect(firstPage.status).toBe(200);
+    expect(firstPage.body.results.length).toBe(FILTERED_GENRE_COUNT);
+    expect(firstPage.body.hasMore).toBe(false);
+
+    const secondPage = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', genre: 'Documentary', offset: FILTERED_GENRE_COUNT });
+
+    expect(secondPage.status).toBe(200);
+    expect(secondPage.body.results).toEqual([]);
+    expect(secondPage.body.hasMore).toBe(false);
+  });
+
+  it('returns 400 for a negative offset', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', offset: '-1' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a non-integer offset', async () => {
+    const res = await request
+      .get('/api/anime/browse')
+      .query({ mode: 'recent', offset: 'abc' });
 
     expect(res.status).toBe(400);
   });
@@ -223,7 +403,7 @@ describe('season/year/genre filters', () => {
         .query({ mode: 'recent', season: 'winter' });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(winterAnime.id);
       expect(ids).not.toContain(summerAnime.id);
     });
@@ -242,7 +422,7 @@ describe('season/year/genre filters', () => {
         .query({ mode: 'recent', year: '2023' });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(year2023Anime.id);
       expect(ids).not.toContain(winterAnime.id);
     });
@@ -261,7 +441,7 @@ describe('season/year/genre filters', () => {
         .query({ mode: 'recent', genre: 'Action & Adventure' });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(actionAnime.id);
       expect(ids).not.toContain(dramaAnime.id);
     });
@@ -272,7 +452,7 @@ describe('season/year/genre filters', () => {
         .query({ mode: 'recent', genre: ['Action & Adventure', 'Drama'] });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(actionAnime.id);
       expect(ids).toContain(dramaAnime.id);
     });
@@ -291,7 +471,7 @@ describe('season/year/genre filters', () => {
         .query({ mode: 'recent', season: 'winter', year: '2024' });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(winterAnime.id);
       expect(ids).not.toContain(summerAnime.id);
       expect(ids).not.toContain(year2023Anime.id);
@@ -305,7 +485,7 @@ describe('season/year/genre filters', () => {
         .query({ q: 'Filter Show', genre: 'Action & Adventure' });
 
       expect(res.status).toBe(200);
-      const ids = res.body.map((a) => a.id);
+      const ids = res.body.results.map((a) => a.id);
       expect(ids).toContain(actionAnime.id);
       expect(ids).not.toContain(dramaAnime.id);
     });

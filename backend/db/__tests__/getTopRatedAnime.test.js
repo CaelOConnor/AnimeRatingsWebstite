@@ -149,6 +149,58 @@ describe('getTopRatedAnime', () => {
   });
 
   // -------------------------------------------------------------------------
+  // offset behaviour
+  // -------------------------------------------------------------------------
+
+  describe('offset', () => {
+    it('skips the first N rows when offset is provided', async () => {
+      const userId = await createTestUser();
+
+      const low  = await createTestAnime({ tmdbId: 99991, title: 'Low Rated' });
+      const mid  = await createTestAnime({ tmdbId: 99992, title: 'Mid Rated' });
+      const high = await createTestAnime({ tmdbId: 99993, title: 'High Rated' });
+
+      await createTestReview({ animeId: low.id,  userId, rating: 3 });
+      await createTestReview({ animeId: mid.id,  userId, rating: 6 });
+      await createTestReview({ animeId: high.id, userId, rating: 9 });
+
+      const firstPage = await getTopRatedAnime(1, null, {}, 0);
+      const secondPage = await getTopRatedAnime(1, null, {}, 1);
+
+      expect(firstPage[0].id).toBe(high.id);
+      expect(secondPage[0].id).toBe(mid.id);
+    });
+
+    it('defaults to offset 0 when omitted', async () => {
+      const userId = await createTestUser();
+      const anime = await createTestAnime({ tmdbId: 99991 });
+      await createTestReview({ animeId: anime.id, userId, rating: 8 });
+
+      const withDefault = await getTopRatedAnime(10);
+      const withExplicitZero = await getTopRatedAnime(10, null, {}, 0);
+
+      expect(withDefault.map((r) => r.id)).toEqual(withExplicitZero.map((r) => r.id));
+    });
+
+    it('returns an empty array when offset is beyond the result set', async () => {
+      const userId = await createTestUser();
+      const anime = await createTestAnime({ tmdbId: 99991 });
+      await createTestReview({ animeId: anime.id, userId, rating: 8 });
+
+      const results = await getTopRatedAnime(10, null, {}, 99999);
+      expect(results).toEqual([]);
+    });
+
+    it('throws if offset is negative', async () => {
+      await expect(getTopRatedAnime(10, null, {}, -1)).rejects.toThrow();
+    });
+
+    it('throws if offset is not an integer', async () => {
+      await expect(getTopRatedAnime(10, null, {}, 1.5)).rejects.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // tmdbType filter
   // -------------------------------------------------------------------------
 

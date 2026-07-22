@@ -14,8 +14,10 @@ function SkeletonCard() {
   );
 }
 
-export default function AnimeGrid({ anime = [], loading = false, emptyMessage = 'No anime found.' }) {
-  // While data is loading, display placeholder cards instead of leaving the page blank.
+export default function AnimeGrid({ anime = [], loading = false, loadingMore = false, emptyMessage = 'No anime found.' }) {
+  // While the initial/reset fetch is loading, replace everything with placeholder
+  // cards instead of leaving the page blank (or showing stale results from before
+  // a filter/search/sort change).
   if (loading) {
     return (
       <div className="anime-grid">
@@ -29,10 +31,13 @@ export default function AnimeGrid({ anime = [], loading = false, emptyMessage = 
     return <div className="anime-grid__empty">{emptyMessage}</div>;
   }
 
-  // Display one AnimeCard component for each anime.
+  // Display one AnimeCard component for each anime. While a "load more" request is
+  // in flight, append trailing skeleton cards instead of replacing the grid, so
+  // the anime already on screen don't disappear while the next batch loads.
   return (
     <div className="anime-grid">
       {anime.map(a => <AnimeCard key={a.id} anime={a} />)}
+      {loadingMore && Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={`more-${i}`} />)}
     </div>
   );
 }

@@ -140,6 +140,44 @@ describe('searchAnimeByTitle', () => {
       await expect(searchAnimeByTitle('   ')).rejects.toThrow();
     });
   });
+
+  describe('limit/offset (pagination)', () => {
+    it('is unbounded by default (no limit passed)', async () => {
+      await createTestAnime({ tmdbId: 10291, title: 'Fullmetal Alchemist' });
+      await createTestAnime({ tmdbId: 10292, title: 'Fullmetal Brotherhood' });
+
+      const results = await searchAnimeByTitle('Fullmetal');
+      expect(results.length).toBe(2);
+    });
+
+    it('respects a provided limit', async () => {
+      await createTestAnime({ tmdbId: 10291, title: 'Fullmetal Alchemist' });
+      await createTestAnime({ tmdbId: 10292, title: 'Fullmetal Brotherhood' });
+
+      const results = await searchAnimeByTitle('Fullmetal', {}, 1);
+      expect(results.length).toBe(1);
+    });
+
+    it('skips the first N matches when offset is provided', async () => {
+      await createTestAnime({ tmdbId: 10291, title: 'Fullmetal Aardvark' });
+      await createTestAnime({ tmdbId: 10292, title: 'Fullmetal Brotherhood' });
+
+      const firstPage = await searchAnimeByTitle('Fullmetal', {}, 1, 0);
+      const secondPage = await searchAnimeByTitle('Fullmetal', {}, 1, 1);
+
+      expect(firstPage[0].title).toBe('Fullmetal Aardvark');
+      expect(secondPage[0].title).toBe('Fullmetal Brotherhood');
+    });
+
+    it('throws if limit is provided but not a positive integer', async () => {
+      await expect(searchAnimeByTitle('Fullmetal', {}, 0)).rejects.toThrow();
+      await expect(searchAnimeByTitle('Fullmetal', {}, -1)).rejects.toThrow();
+    });
+
+    it('throws if offset is negative', async () => {
+      await expect(searchAnimeByTitle('Fullmetal', {}, 10, -1)).rejects.toThrow();
+    });
+  });
 });
 
 

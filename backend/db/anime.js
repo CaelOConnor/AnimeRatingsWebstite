@@ -396,10 +396,12 @@ function buildAnimeFilters(params, filters = {}, alias = 'a') {
  *
  * @param {number}           limit     Maximum number of rows to return. Required, must be >= 1.
  * @param {'tv'|'movie'|null} tmdbType  Optional type filter. Null returns all types.
+ * @param {object}           filters   Optional season/year/genre filters.
+ * @param {number}           offset    Rows to skip, for pagination. Defaults to 0.
  *
  * @returns {Promise<object[]>}
  */
-export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
+export async function getTopRatedAnime(limit, tmdbType = null, filters = {}, offset = 0) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -408,6 +410,9 @@ export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
   }
   if (!Number.isInteger(limit) || limit < 1) {
     throw new Error('limit must be a positive integer');
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error('offset must be a non-negative integer');
   }
 
   // ------------------------------------------------------------------
@@ -418,6 +423,7 @@ export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
   const params = [limit];
   const typeFilter = tmdbType ? `AND a.tmdb_type = $${params.push(tmdbType)}` : '';
   const advancedFilter = buildAnimeFilters(params, filters, 'a');
+  const offsetIdx = params.push(offset);
 
   const result = await query(
     `SELECT
@@ -443,7 +449,7 @@ export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
     WHERE 1=1 ${typeFilter} ${advancedFilter}
     GROUP BY a.id
     ORDER BY average_rating DESC
-    LIMIT $1`,
+    LIMIT $1 OFFSET $${offsetIdx}`,
     params
   );
 
@@ -463,11 +469,13 @@ export async function getTopRatedAnime(limit, tmdbType = null, filters = {}) {
  * title with a newer release date. Powers the frontend's sort control,
  * relabeled from "Recently Added" to "Newest Release" to match.
  *
- * @param {number} limit  Maximum number of rows to return. Required, must be >= 1.
+ * @param {number} limit    Maximum number of rows to return. Required, must be >= 1.
+ * @param {object} filters  Optional season/year/genre filters.
+ * @param {number} offset   Rows to skip, for pagination. Defaults to 0.
  *
  * @returns {Promise<object[]>}
  */
-export async function getRecentlyCachedAnime(limit, filters = {}) {
+export async function getRecentlyCachedAnime(limit, filters = {}, offset = 0) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -477,12 +485,16 @@ export async function getRecentlyCachedAnime(limit, filters = {}) {
   if (!Number.isInteger(limit) || limit < 1) {
     throw new Error('limit must be a positive integer');
   }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error('offset must be a non-negative integer');
+  }
 
   // ------------------------------------------------------------------
   // Query
   // ------------------------------------------------------------------
   const params = [limit];
   const advancedFilter = buildAnimeFilters(params, filters, 'a');
+  const offsetIdx = params.push(offset);
 
   const result = await query(
     `SELECT
@@ -496,7 +508,7 @@ export async function getRecentlyCachedAnime(limit, filters = {}) {
     WHERE 1=1 ${advancedFilter}
     GROUP BY a.id
     ORDER BY a.first_air_date DESC NULLS LAST
-    LIMIT $1`,
+    LIMIT $1 OFFSET $${offsetIdx}`,
     params
   );
 
@@ -512,10 +524,14 @@ export async function getRecentlyCachedAnime(limit, filters = {}) {
  * Searches English titles only — original_title is intentionally excluded.
  *
  * @param {string} searchQuery  The search string. Required, must not be empty or whitespace.
+ * @param {object} filters      Optional season/year/genre filters.
+ * @param {number|null} limit   Optional cap on rows returned, for pagination. Null (default)
+ *                              means unbounded, preserving this function's original behaviour.
+ * @param {number} offset       Rows to skip. Only meaningful when limit is provided. Defaults to 0.
  *
  * @returns {Promise<object[]>}
  */
-export async function searchAnimeByTitle(searchQuery, filters = {}) {
+export async function searchAnimeByTitle(searchQuery, filters = {}, limit = null, offset = 0) {
   // ------------------------------------------------------------------
   // Validation
   // ------------------------------------------------------------------
@@ -525,6 +541,12 @@ export async function searchAnimeByTitle(searchQuery, filters = {}) {
   if (typeof searchQuery !== 'string' || searchQuery.trim() === '') {
     throw new Error('searchQuery must be a non-empty string');
   }
+  if (limit !== null && (!Number.isInteger(limit) || limit < 1)) {
+    throw new Error('limit must be a positive integer');
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error('offset must be a non-negative integer');
+  }
 
   // ------------------------------------------------------------------
   // Query
@@ -533,6 +555,13 @@ export async function searchAnimeByTitle(searchQuery, filters = {}) {
   // ------------------------------------------------------------------
   const params = [`%${searchQuery.trim()}%`];
   const advancedFilter = buildAnimeFilters(params, filters, 'a');
+
+  let limitClause = '';
+  if (limit !== null) {
+    const limitIdx = params.push(limit);
+    const offsetIdx = params.push(offset);
+    limitClause = `LIMIT $${limitIdx} OFFSET $${offsetIdx}`;
+  }
 
   const result = await query(
     `SELECT
@@ -545,7 +574,8 @@ export async function searchAnimeByTitle(searchQuery, filters = {}) {
     LEFT JOIN reviews r ON r.anime_id = a.id
     WHERE a.title ILIKE $1 ${advancedFilter}
     GROUP BY a.id
-    ORDER BY a.title ASC`,
+    ORDER BY a.title ASC
+    ${limitClause}`,
     params
   );
 
