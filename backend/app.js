@@ -73,9 +73,17 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Not dead code: multer's fileFilter rejections and file-size-limit errors
+// (see upload.single('avatar') in routes/users.js) call next(err)
+// internally, which skips straight to this handler since no route wraps
+// that middleware in its own try/catch. Anything else reaching here today
+// would be a route that started throwing/rejecting without its own
+// try/catch — leaking err.message (which can include raw SQL error text or
+// file paths) is only safe for local debugging, never in production.
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message, err.stack);
-  res.status(500).json({ error: err.message });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.status(500).json({ error: isProd ? 'Internal server error' : err.message });
 });
 
 export default app;

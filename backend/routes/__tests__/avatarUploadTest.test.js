@@ -113,3 +113,25 @@ describe('POST /api/users/:id/avatar — old avatar cleanup', () => {
     await query(`DELETE FROM users WHERE id = $1`, [freshUser.id]);
   });
 });
+
+describe('POST /api/users/:id/avatar — multer errors reach app.js\'s global error handler', () => {
+  // multer's fileFilter rejects based on the client-reported Content-Type,
+  // before file-type's magic-byte check ever runs — cb(new Error(...)) in
+  // that fileFilter makes multer call next(err) internally, which skips the
+  // route's own try/catch entirely and lands on app.js's catch-all handler.
+  // This is the concrete, non-hypothetical path the audit flagged; it isn't
+  // dead code. NODE_ENV=test here (see vitest.setup.js) exercises the
+  // non-production branch — the real message should still come through for
+  // local/test debugging. The production branch (generic message) is
+  // verified separately against a live server, since this whole suite
+  // always runs under NODE_ENV=test.
+  it('reaches the global handler and (outside production) surfaces the real multer error message', async () => {
+    const res = await request
+      .post(`/api/users/${user.id}/avatar`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('avatar', REAL_PNG_BYTES, { filename: 'fake.txt', contentType: 'text/plain' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Only PNG, JPG, and WebP images are allowed.');
+  });
+});

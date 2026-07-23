@@ -25,6 +25,13 @@ services:
       # fails `docker compose up`/`config` immediately if unset, before the
       # app.js startup check even runs.
       - CORS_ORIGIN=${CORS_ORIGIN:?CORS_ORIGIN must be set in the prod .env — refusing to fall back to the dev default}
+      # Overrides the base file's DB_USER/DB_PASSWORD (owner-level, used for
+      # schema setup and local dev convenience) with the least-privilege
+      # role created by backend/db/init-app-role.sh — SELECT/INSERT/UPDATE/
+      # DELETE on the app's own tables only, no DDL/ownership. A future
+      # SQL-injection-class bug in prod can't DROP/CREATE anything.
+      - DB_USER=${DB_APP_USER:?DB_APP_USER must be set in the prod .env}
+      - DB_PASSWORD=${DB_APP_PASSWORD:?DB_APP_PASSWORD must be set in the prod .env}
     deploy:
       resources:
         limits:
