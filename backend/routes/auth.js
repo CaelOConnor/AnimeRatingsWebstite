@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/db.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimit.js';
+import { logSecurityEvent } from '../utils/securityLog.js';
 import {
   denylistToken,
   addActiveToken,
@@ -37,7 +38,7 @@ function signToken(user) {
       jti,                     // JWT ID — used for denylist lookups
     },
     process.env.JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN, algorithm: 'HS256' } // explicit — see middleware/auth.js's matching algorithms pin
   );
   // Decode to get the actual exp timestamp (unix seconds)
   const { exp } = jwt.decode(token);
@@ -130,15 +131,21 @@ router.post('/login', loginLimiter, async (req, res) => {
       // so response time can't be used to tell "no such user" apart from
       // "wrong password" — the JSON error message alone already doesn't.
       await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      // identifier only — never the password. It's whatever the client
+      // typed, not a confirmed username/email, but that's exactly what's
+      // useful here: it's what an attacker is guessing.
+      logSecurityEvent('login_failed', { reason: 'no_such_user', identifier, ip: req.ip });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
+      logSecurityEvent('login_failed', { reason: 'wrong_password', identifier, ip: req.ip });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.is_banned) {
+      logSecurityEvent('login_blocked_banned', { identifier, ip: req.ip });
       return res.status(403).json({ error: 'This account has been suspended' });
     }
 

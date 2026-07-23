@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../../app.js';
 import { createTestUser } from './testHelpers.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { query } from '../../db/db.js';
 
 describe('POST /api/auth/register', () => {
@@ -178,6 +179,41 @@ describe('POST /api/auth/login — timing side-channel mitigation', () => {
   });
 });
 
+describe('GET /api/auth/me — JWT algorithm pinning', () => {
+  // Confirmed live: jsonwebtoken infers the accepted algorithm family from
+  // the key type when no `algorithms` option is passed to verify() — for a
+  // plain string secret that means HS256, HS384, *and* HS512 all get
+  // accepted, even though this app only ever signs with HS256. A token
+  // re-signed as HS512 with the real secret got past authenticateToken
+  // before middleware/auth.js pinned `algorithms: ['HS256']` explicitly.
+  it('rejects a token signed with the same secret but a different HMAC algorithm (HS512)', async () => {
+    const { user } = await createTestUser();
+
+    const forged = jwt.sign(
+      { sub: user.id, username: user.username, role: 'user', jti: 'forged-hs512-jti' },
+      process.env.JWT_SECRET,
+      { algorithm: 'HS512', expiresIn: '1h' }
+    );
+
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${forged}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe('Invalid token');
+  });
+
+  it('still accepts a legitimately-issued HS256 token', async () => {
+    const { token } = await createTestUser();
+
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('POST /api/auth/logout', () => {
   it('logs out successfully with a valid token', async () => {
     const { token } = await createTestUser();
@@ -207,6 +243,16 @@ describe('GET /api/auth/me', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.user.id).toBe(user.id);
+  });
+
+  it('sets Cache-Control: no-store — this route returns the caller\'s own data and must never be cached', async () => {
+    const { token } = await createTestUser();
+
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.headers['cache-control']).toBe('no-store');
   });
 
   it('rejects request without a token', async () => {

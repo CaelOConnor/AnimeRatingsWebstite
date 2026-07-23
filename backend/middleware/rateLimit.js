@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+import { logSecurityEvent } from '../utils/securityLog.js';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
@@ -16,15 +17,38 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000;
  * fragile. Tests that want to exercise the limiter itself (see
  * middleware/__tests__/rateLimitTest.test.js) call this factory directly
  * with skipInTest: false.
+ *
+ * `name` identifies which limiter tripped in the security log — required
+ * whenever a name isn't passed, calls fall back to 'unnamed' rather than
+ * throwing, since makeLimiter is also used directly by tests with no name.
+ *
+ * `keyGenerator` defaults to express-rate-limit's own IP-based one when
+ * omitted. Pass one (e.g. `(req) => req.user.id`) to key the counter on
+ * something else — see userContentLimiter below, which must run after
+ * authenticateToken so req.user is populated.
  */
-export function makeLimiter({ windowMs, max, message, skipInTest = true }) {
+export function makeLimiter({ windowMs, max, message, name, skipInTest = true, keyGenerator }) {
   return rateLimit({
     windowMs,
     limit: max,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: message },
+    keyGenerator,
     skip: skipInTest ? () => process.env.NODE_ENV === 'test' : undefined,
+    // Overrides express-rate-limit's default handler (which just sends the
+    // 429) to also log the trigger — same status/body as the default, so
+    // this doesn't change client-visible behavior at all.
+    handler: (req, res) => {
+      logSecurityEvent('rate_limit_triggered', {
+        limiter: name ?? 'unnamed',
+        ip: req.ip,
+        userId: req.user?.id ?? null,
+        method: req.method,
+        path: req.originalUrl,
+      });
+      res.status(429).json({ error: message });
+    },
   });
 }
 
@@ -34,12 +58,14 @@ export const loginLimiter = makeLimiter({
   windowMs: FIFTEEN_MINUTES,
   max: 10,
   message: 'Too many login attempts. Please try again later.',
+  name: 'login',
 });
 
 export const registerLimiter = makeLimiter({
   windowMs: FIFTEEN_MINUTES,
   max: 10,
   message: 'Too many registration attempts. Please try again later.',
+  name: 'register',
 });
 
 // General — content-creation spam surface (feedback, reviews, comments,
@@ -51,4 +77,25 @@ export const contentLimiter = makeLimiter({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || FIFTEEN_MINUTES,
   max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 25,
   message: 'Too many requests. Please try again later.',
+  name: 'content',
+});
+
+// Per-user counterpart to contentLimiter, applied in addition to it (never
+// instead of) — confirmed live that an authenticated user rotating their
+// apparent source IP (spoofed X-Forwarded-For, trusted once app.js's
+// `trust proxy` was set) faced zero throttling under the IP-only limiter,
+// since each "new" IP only ever sees one request. Keyed on req.user.id
+// instead of IP, so it must run after authenticateToken in the route chain
+// (contentLimiter runs before auth and stays IP-keyed — a single account
+// and a single IP are now both capped independently, and an attacker has
+// to evade both, not just one). Slightly looser than the IP cap on
+// purpose: legitimate users sharing an IP (an office, a household) should
+// still be somewhat protected by the IP limiter without each of them
+// individually eating into a tighter shared budget.
+export const userContentLimiter = makeLimiter({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || FIFTEEN_MINUTES,
+  max: parseInt(process.env.RATE_LIMIT_USER_MAX, 10) || 35,
+  message: 'Too many requests. Please try again later.',
+  name: 'content-per-user',
+  keyGenerator: (req) => req.user.id,
 });

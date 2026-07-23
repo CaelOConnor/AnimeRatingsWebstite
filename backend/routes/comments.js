@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { contentLimiter } from '../middleware/rateLimit.js';
+import { contentLimiter, userContentLimiter } from '../middleware/rateLimit.js';
 import {
   createComment,
   getCommentsByReviewId,
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 // ── POST /api/comments ────────────────────────────────────────────────────────
 // Auth required. Body is mandatory — there is no rating fallback here.
 
-router.post('/', contentLimiter, authenticateToken, async (req, res) => {
+router.post('/', contentLimiter, authenticateToken, userContentLimiter, async (req, res) => {
   const { reviewId, body } = req.body;
 
   if (!reviewId) {

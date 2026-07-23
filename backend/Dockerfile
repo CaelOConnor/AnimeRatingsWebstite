@@ -1,5 +1,12 @@
 # ── Development stage ────────────────────────────────────────────────────────
-FROM node:20-alpine AS development
+# Pinned to a digest, not just the `20-alpine` tag — the tag is mutable and
+# can point to a different image tomorrow than it does today; the digest
+# can't. Tradeoff: this now needs a manual bump to pick up new Alpine/Node
+# patch releases (rebuilding alone won't do it, since the digest is fixed).
+# To update: `docker pull node:20-alpine`, then
+# `docker image inspect node:20-alpine --format '{{index .RepoDigests 0}}'`,
+# and replace the digest below (in both Dockerfiles that use this image).
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS development
 
 WORKDIR /app
 
@@ -19,7 +26,7 @@ CMD ["npm", "run", "dev"]
 # server actually needs to run — no __tests__, scripts/, seed.js, etc.
 # (.dockerignore keeps those out of the build context entirely, so the
 # directory COPYs below can't pull them in even implicitly.)
-FROM node:20-alpine AS production
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS production
 
 WORKDIR /app
 

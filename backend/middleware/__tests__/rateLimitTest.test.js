@@ -64,4 +64,47 @@ describe('rate limiting (makeLimiter)', () => {
       expect(res.status).toBe(200);
     }
   });
+
+  // Confirmed live (real HTTP requests, spoofed X-Forwarded-For) that
+  // contentLimiter alone — keyed on IP by default — lets a single
+  // authenticated user submit unlimited requests just by rotating their
+  // apparent source IP each time. userContentLimiter closes that by keying
+  // on req.user.id instead. This test proves the mechanism in isolation:
+  // a custom keyGenerator ignores IP entirely and tracks per-key counters.
+  it('with a custom keyGenerator, ignores IP and rate-limits per key instead (e.g. per user id)', async () => {
+    const app = express();
+    // Stand-in for authenticateToken — a real route would populate
+    // req.user from the verified JWT; here it's set directly from a
+    // header so the test can drive it per-request.
+    app.use((req, res, next) => {
+      req.user = { id: req.headers['x-fake-user-id'] };
+      next();
+    });
+    app.get(
+      '/ping',
+      makeLimiter({
+        windowMs: 60_000,
+        max: 2,
+        message: 'Too many requests. Please try again later.',
+        skipInTest: false,
+        keyGenerator: (req) => req.user.id,
+      }),
+      (req, res) => res.json({ ok: true })
+    );
+    const request = supertest(app);
+
+    // Same user id, three different spoofed source IPs — the IP-based
+    // default would treat these as three independent, unthrottled callers.
+    const first = await request.get('/ping').set('x-fake-user-id', 'userA').set('X-Forwarded-For', '1.1.1.1');
+    const second = await request.get('/ping').set('x-fake-user-id', 'userA').set('X-Forwarded-For', '2.2.2.2');
+    const third = await request.get('/ping').set('x-fake-user-id', 'userA').set('X-Forwarded-For', '3.3.3.3');
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(third.status).toBe(429); // max:2 hit on the 3rd, despite the 3rd "IP"
+
+    // A different user id gets its own independent counter.
+    const otherUser = await request.get('/ping').set('x-fake-user-id', 'userB').set('X-Forwarded-For', '1.1.1.1');
+    expect(otherUser.status).toBe(200);
+  });
 });

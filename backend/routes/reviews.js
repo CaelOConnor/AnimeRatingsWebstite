@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
-import { contentLimiter } from '../middleware/rateLimit.js';
+import { contentLimiter, userContentLimiter } from '../middleware/rateLimit.js';
 import {
   createReview,
   getReviewsByAnimeId,
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
 // Auth required. Creates a review for the authenticated user.
 // At least one of rating or body must be provided.
 
-router.post('/', contentLimiter, authenticateToken, async (req, res) => {
+router.post('/', contentLimiter, authenticateToken, userContentLimiter, async (req, res) => {
   const { animeId, rating, body } = req.body;
 
   if (!animeId) {

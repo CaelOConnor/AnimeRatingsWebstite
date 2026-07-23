@@ -51,6 +51,7 @@ services:
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-25}
+      - RATE_LIMIT_USER_MAX=${RATE_LIMIT_USER_MAX:-35}
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,7 +62,11 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:16-alpine
+    # Pinned to a digest, not just the `16-alpine` tag (same tradeoff as the
+    # Dockerfiles: reproducible now, needs a manual bump later for patches —
+    # `docker pull postgres:16-alpine` then `docker image inspect ... --format
+    # '{{index .RepoDigests 0}}'` to get a fresh one).
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     ports:
       - "5432:5432"
     environment:
@@ -88,7 +93,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
     ports:
       - "6379:6379"
     volumes:

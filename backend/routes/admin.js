@@ -7,6 +7,7 @@ import { getUsersByRole, getBannedUsers, getRecentReviews, getReports, dismissAl
 import { resolveFeedback } from '../db/feedback.js';
 import { searchTmdbCandidates } from './anime.js';
 import { denylistAllUserTokens } from '../services/redis.js';
+import { logSecurityEvent } from '../utils/securityLog.js';
 
 const router = Router();
 
@@ -23,6 +24,14 @@ const requireAuth = authenticateToken;
 function requireMod(req, res, next) {
   const role = req.user?.role;
   if (role !== 'moderator' && role !== 'admin') {
+    logSecurityEvent('admin_route_forbidden', {
+      userId: req.user?.id ?? null,
+      username: req.user?.username ?? null,
+      role: role ?? null,
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip,
+    });
     return res.status(403).json({ error: 'Forbidden.' });
   }
   next();
@@ -31,6 +40,14 @@ function requireMod(req, res, next) {
 // Requires role_type of 'admin' only.
 function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') {
+    logSecurityEvent('admin_route_forbidden', {
+      userId: req.user?.id ?? null,
+      username: req.user?.username ?? null,
+      role: req.user?.role ?? null,
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip,
+    });
     return res.status(403).json({ error: 'Forbidden.' });
   }
   next();
@@ -121,6 +138,14 @@ router.post('/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
     // This ensures they cannot continue using existing sessions post-ban.
     await denylistAllUserTokens(id);
 
+    logSecurityEvent('admin_action', {
+      action: 'ban_user',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetUserId: id,
+      ip: req.ip,
+    });
+
     res.json(ADMIN_USER_FIELDS(banned));
   } catch (err) {
     console.error('[POST /api/admin/users/:id/ban]', err);
@@ -146,6 +171,15 @@ router.post('/users/:id/unban', requireAuth, requireAdmin, async (req, res) => {
     }
 
     const unbanned = await unbanUser(id);
+
+    logSecurityEvent('admin_action', {
+      action: 'unban_user',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetUserId: id,
+      ip: req.ip,
+    });
+
     res.json(ADMIN_USER_FIELDS(unbanned));
   } catch (err) {
     console.error('[POST /api/admin/users/:id/unban]', err);
@@ -179,6 +213,14 @@ router.delete('/users/:id', requireAuth, requireAdmin, async (req, res) => {
     // until natural expiry, since req.user is built from the token payload
     // alone with no DB existence check.
     await denylistAllUserTokens(id);
+
+    logSecurityEvent('admin_action', {
+      action: 'delete_user',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetUserId: id,
+      ip: req.ip,
+    });
 
     res.status(204).send();
   } catch (err) {
@@ -219,6 +261,15 @@ router.delete('/reviews/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 
     await deleteReview(id);
+
+    logSecurityEvent('admin_action', {
+      action: 'delete_review',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetReviewId: id,
+      ip: req.ip,
+    });
+
     res.status(204).send();
   } catch (err) {
     console.error('[DELETE /api/admin/reviews/:id]', err);
@@ -243,6 +294,15 @@ router.delete('/comments/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 
     await deleteComment(id);
+
+    logSecurityEvent('admin_action', {
+      action: 'delete_comment',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetCommentId: id,
+      ip: req.ip,
+    });
+
     res.status(204).send();
   } catch (err) {
     console.error('[DELETE /api/admin/comments/:id]', err);
@@ -293,6 +353,15 @@ router.patch('/feedback/:id', requireAuth, requireMod, async (req, res) => {
     if (!feedback) {
       return res.status(404).json({ error: 'Feedback not found.' });
     }
+
+    logSecurityEvent('admin_action', {
+      action: 'resolve_feedback',
+      actorId: req.user.id,
+      actorUsername: req.user.username,
+      targetFeedbackId: id,
+      ip: req.ip,
+    });
+
     res.json(feedback);
   } catch (err) {
     console.error('[PATCH /api/admin/feedback/:id]', err);

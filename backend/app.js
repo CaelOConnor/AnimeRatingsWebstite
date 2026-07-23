@@ -24,6 +24,15 @@ if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
 
 const app = express();
 
+// Trust exactly one hop (the nginx reverse proxy in front of this service —
+// see nginx/nginx.prod.conf, which sets X-Forwarded-For/X-Real-IP). Without
+// this, req.ip resolves to nginx's own container IP in prod, not the real
+// client — silently breaking both the rate limiter's per-IP buckets (every
+// user would share one) and the IP field in security logging below. Safe
+// in dev too: with no proxy in front, there's no X-Forwarded-For to trust,
+// so req.ip just falls back to the direct connection as before.
+app.set('trust proxy', 1);
+
 // ── Middleware ────────────────────────────────────────────────────────────────
 
 // Security response headers (CSP, X-Content-Type-Options, X-Frame-Options,
@@ -44,7 +53,11 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json());
+// 100kb is express.json()'s own default — made explicit here so the limit
+// is visible in code rather than relying on an implicit library default.
+// Confirmed live: a body over this returns 413 (see the error handler
+// below for why it used to show as a 500 instead).
+app.use(express.json({ limit: '100kb' }));
 app.use('/uploads', express.static('/app/uploads'));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
@@ -80,10 +93,25 @@ app.get('/api/health', async (req, res) => {
 // would be a route that started throwing/rejecting without its own
 // try/catch — leaking err.message (which can include raw SQL error text or
 // file paths) is only safe for local debugging, never in production.
+//
+// Respects err.status/err.statusCode when the error already specifies a
+// client-error code — body-parser's malformed-JSON error (400) and
+// payload-too-large error (413) both set one of these, and forcing every
+// error to 500 was flattening those into a misleading "server fault" for
+// what's actually bad client input. Confirmed live: a malformed JSON body
+// used to come back as 500, now correctly 400; an oversized body used to
+// be 500, now correctly 413. Falls back to 500 for anything that doesn't
+// specify its own status (genuine unexpected errors).
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message, err.stack);
   const isProd = process.env.NODE_ENV === 'production';
-  res.status(500).json({ error: isProd ? 'Internal server error' : err.message });
+  const status = (typeof err.status === 'number' && err.status >= 400 && err.status < 600)
+    ? err.status
+    : (typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600)
+      ? err.statusCode
+      : 500;
+  const genericMessage = status >= 500 ? 'Internal server error' : 'Bad request';
+  res.status(status).json({ error: isProd ? genericMessage : err.message });
 });
 
 export default app;
