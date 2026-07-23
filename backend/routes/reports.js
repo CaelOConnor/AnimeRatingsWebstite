@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
+import { contentLimiter } from '../middleware/rateLimit.js';
 import { createReport } from '../db/reports.js';
 
 const router = Router();
@@ -10,7 +11,7 @@ const VALID_TARGET_TYPES = ['review', 'comment', 'user'];
 // ── POST /api/reports ─────────────────────────────────────────────────────────
 // Authenticated users only. Files a report against a piece of content.
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', contentLimiter, authenticateToken, async (req, res) => {
   const { targetType, targetId, reportedUserId } = req.body;
 
   if (!VALID_TARGET_TYPES.includes(targetType)) {

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { loginLimiter, registerLimiter } from '../middleware/rateLimit.js';
 import {
   denylistToken,
   addActiveToken,
@@ -14,6 +15,15 @@ const router = Router();
 
 const SALT_ROUNDS = 12;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+// Precomputed with the same SALT_ROUNDS (12) as real user hashes — never
+// changes, never matches a real password. Compared against on the
+// "identifier doesn't exist" path below so that path pays the same
+// bcrypt.compare() cost a real user lookup would, closing a timing
+// side-channel that would otherwise let an attacker enumerate valid
+// usernames/emails by measuring response time (nonexistent identifiers
+// used to return near-instantly, skipping bcrypt entirely).
+const DUMMY_PASSWORD_HASH = '$2b$12$h8MabOXjvvGGk7mCx5IJ3eTsjo0ppB0MXa.8lBPcDcQvAD4kgpkbC';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -42,7 +52,7 @@ function sanitizeUser(user) {
 
 // ── POST /api/auth/register ───────────────────────────────────────────────────
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   const { username, email, password } = req.body;
 
   // Basic validation
@@ -99,7 +109,7 @@ router.post('/register', async (req, res) => {
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { identifier, password } = req.body;
 
   if (!identifier || !password) {
@@ -116,6 +126,10 @@ router.post('/login', async (req, res) => {
     const user = result.rows[0];
 
     if (!user) {
+      // Burn the same bcrypt.compare() cost the found-user path below pays,
+      // so response time can't be used to tell "no such user" apart from
+      // "wrong password" — the JSON error message alone already doesn't.
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 

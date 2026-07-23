@@ -2,6 +2,7 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import { fileTypeFromFile } from 'file-type';
 import { authenticateToken } from '../middleware/auth.js';
 import {
   getUserById,
@@ -27,6 +28,11 @@ const PUBLIC_FIELDS = (u) => ({
 
 const AVATARS_DIR = '/app/uploads/avatars';
 
+// Shared between multer's fileFilter (client-reported Content-Type — just a
+// cheap first-pass rejection) and the content-based magic-byte check below
+// (the actual security boundary — see POST /:id/avatar).
+const ALLOWED_AVATAR_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
 // Ensure the avatars directory exists at startup
 fs.mkdirSync(AVATARS_DIR, { recursive: true });
 
@@ -42,14 +48,30 @@ const upload = multer({
   storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
-    if (allowed.includes(file.mimetype)) {
+    if (ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Only PNG, JPG, and WebP images are allowed.'));
     }
   },
 });
+
+// Extracts the bare filename from a `/uploads/avatars/<file>` URL, refusing
+// anything that isn't exactly that shape. avatar_url is also settable as a
+// free-form string via PATCH /:id, so this guards against a crafted value
+// (e.g. containing "..") being used to unlink an arbitrary file when a
+// later avatar upload tries to clean up the "previous" one.
+function avatarFilenameFromUrl(avatarUrl) {
+  const prefix = '/uploads/avatars/';
+  if (typeof avatarUrl !== 'string' || !avatarUrl.startsWith(prefix)) {
+    return null;
+  }
+  const filename = avatarUrl.slice(prefix.length);
+  if (!filename || filename.includes('/') || filename.includes('\\') || filename.includes('..')) {
+    return null;
+  }
+  return filename;
+}
 
 // ── GET /api/users/:id ────────────────────────────────────────────────────────
 
@@ -137,11 +159,38 @@ router.post('/:id/avatar', authenticateToken, upload.single('avatar'), async (re
     return res.status(400).json({ error: 'No file uploaded.' });
   }
 
+  // fileFilter above only checked the client-reported Content-Type header,
+  // which an attacker can set to anything regardless of the file's actual
+  // bytes. Read the real magic bytes off disk and reject anything that
+  // doesn't actually decode as an allowed image type, even if it claimed to.
+  const detected = await fileTypeFromFile(req.file.path);
+  if (!detected || !ALLOWED_AVATAR_MIME_TYPES.has(detected.mime)) {
+    await fs.promises.unlink(req.file.path).catch(() => {});
+    return res.status(400).json({ error: 'File content does not match an allowed image type (PNG, JPG, WebP).' });
+  }
+
   // Build a public URL the frontend can use directly
   const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
   try {
+    const existing = await getUserById(id);
     const updated = await updateUser(id, { avatar_url: avatarUrl });
+
+    // Cleanup of the previous avatar file — awaited so the response only
+    // completes once it's actually done, but never fails the request: an
+    // orphaned old file is a much smaller problem than a 500 on an
+    // otherwise-successful avatar change.
+    const oldFilename = avatarFilenameFromUrl(existing?.avatar_url);
+    if (oldFilename && oldFilename !== req.file.filename) {
+      try {
+        await fs.promises.unlink(path.join(AVATARS_DIR, oldFilename));
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.error('[POST /api/users/:id/avatar] failed to remove old avatar:', err.message);
+        }
+      }
+    }
+
     res.json({ avatar_url: PUBLIC_FIELDS(updated).avatar_url });
   } catch (err) {
     console.error('[POST /api/users/:id/avatar]', err);

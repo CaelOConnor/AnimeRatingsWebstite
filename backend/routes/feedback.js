@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
+import { contentLimiter } from '../middleware/rateLimit.js';
 import { createFeedback } from '../db/feedback.js';
 
 const router = Router();
@@ -10,7 +11,7 @@ const MAX_CONTENT_LENGTH = 1000;
 // ── POST /api/feedback ────────────────────────────────────────────────────────
 // Authenticated users only. Submits a show request or bug report.
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', contentLimiter, authenticateToken, async (req, res) => {
   const { type, content } = req.body;
 
   if (!VALID_TYPES.includes(type)) {

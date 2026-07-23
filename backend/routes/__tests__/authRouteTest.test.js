@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import app from '../../app.js';
 import { createTestUser } from './testHelpers.js';
@@ -138,6 +138,43 @@ describe('POST /api/auth/login', () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('This account has been suspended');
+  });
+});
+
+describe('POST /api/auth/login — timing side-channel mitigation', () => {
+  // Asserting exact durations here would be flaky (bcrypt cost, machine
+  // load, CI variance) — instead we assert the *mechanism*: a nonexistent
+  // identifier must still pay a real bcrypt.compare() call, the same way a
+  // wrong-password-for-a-real-user response does, rather than short-circuiting
+  // before ever calling bcrypt. That's what actually closes the timing gap.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls bcrypt.compare even when the identifier does not exist', async () => {
+    const compareSpy = vi.spyOn(bcrypt, 'compare');
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ identifier: 'definitely-not-a-real-user@example.com', password: 'whatever123' });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe('Invalid credentials');
+    expect(compareSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('compares against a precomputed dummy hash, not a real password_hash, when no user is found', async () => {
+    const compareSpy = vi.spyOn(bcrypt, 'compare');
+
+    await request(app)
+      .post('/api/auth/login')
+      .send({ identifier: 'definitely-not-a-real-user@example.com', password: 'whatever123' });
+
+    const [, hashArg] = compareSpy.mock.calls[0];
+    // A real bcrypt hash at cost factor 12 — same cost as production hashes
+    // (SALT_ROUNDS in routes/auth.js), so the compare() call takes
+    // comparable time either way.
+    expect(hashArg).toMatch(/^\$2[aby]\$12\$/);
   });
 });
 

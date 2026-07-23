@@ -19,6 +19,12 @@ services:
     ports: !reset []        # Nginx handles routing, don't expose directly
     environment:
       - NODE_ENV=production
+      # No fallback here on purpose — the base compose file's CORS_ORIGIN
+      # default (http://localhost:5173) must never reach a production
+      # container. This overrides that key (environment merges per-key) and
+      # fails `docker compose up`/`config` immediately if unset, before the
+      # app.js startup check even runs.
+      - CORS_ORIGIN=${CORS_ORIGIN:?CORS_ORIGIN must be set in the prod .env — refusing to fall back to the dev default}
     deploy:
       resources:
         limits:
