@@ -11,8 +11,10 @@ import { resolve } from 'path';
 // cleanup (DELETE FROM anime ...) against the dev DB instead of the test one.
 process.env.NODE_ENV = 'test';
 
-// Load root .env file
-config({ path: resolve(__dirname, '../.env') });
+// Load the dedicated test env file — never the dev root .env. Keeps
+// JWT_SECRET/DB_USER/DB_PASSWORD fully separate from dev (see .env.test's
+// own header comment and DB_USER_TEST/DB_PASSWORD_TEST in the root .env).
+config({ path: resolve(__dirname, '../.env.test') });
 
 export default defineConfig({
   test: {

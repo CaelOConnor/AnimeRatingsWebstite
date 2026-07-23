@@ -5,6 +5,7 @@ backend/node_modules/
 
 # Environment variables — never commit secrets, use .env.example instead
 .env
+.env.test
 .env.local
 .env.*.local
 

@@ -13,7 +13,7 @@ const dbName = process.env.NODE_ENV === 'test'
 // Unconditional (not gated behind NODE_ENV==='development' like query()'s
 // per-call logging below) so drift is always visible — this is exactly the
 // line that would have caught this session's dev-DB-wipe bug immediately.
-console.log(`[db] Connecting to database "${dbName}" (NODE_ENV=${process.env.NODE_ENV})`);
+console.log(`[db] Connecting to database "${dbName}" as user "${process.env.DB_USER}" (NODE_ENV=${process.env.NODE_ENV})`);
 
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
