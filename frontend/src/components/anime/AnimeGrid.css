@@ -1,7 +1,7 @@
 .anime-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 @media (min-width: 480px) { .anime-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -10,9 +10,9 @@
 
 .anime-grid__empty {
   text-align: center;
-  padding: 64px 24px;
+  padding: var(--space-16) var(--space-6);
   color: var(--color-text-tertiary);
-  font-size: 15px;
+  font-size: var(--font-size-md);
 }
 
 /* Skeleton */
@@ -25,26 +25,26 @@
 
 .anime-grid__skeleton-image {
   aspect-ratio: 2 / 3;
-  background: linear-gradient(90deg, #ede9f7 25%, #f5f4fc 50%, #ede9f7 75%);
+  background: linear-gradient(90deg, var(--color-skeleton-base) 25%, var(--color-navbar-search-bg) 50%, var(--color-skeleton-base) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s infinite;
 }
 
 .anime-grid__skeleton-body {
-  padding: 10px 12px 12px;
+  padding: var(--space-2-5) var(--space-3) var(--space-3);
 }
 
 .anime-grid__skeleton-line {
   height: 14px;
   border-radius: 6px;
-  background: #ede9f7;
-  margin-bottom: 8px;
+  background: var(--color-skeleton-base);
+  margin-bottom: var(--space-2);
 }
 
 .anime-grid__skeleton-line--short {
   height: 12px;
   width: 60%;
-  background: #f0eef9;
+  background: var(--color-surface-hover);
   margin-bottom: 0;
 }
 

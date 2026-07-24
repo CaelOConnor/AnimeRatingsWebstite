@@ -16,6 +16,14 @@ RUN npm install
 
 COPY . .
 
+# Same reasoning as the production stage below: create the uploads dir
+# (where the named volume mounts) owned by the non-root user before
+# switching to it, so a freshly-created volume inherits writable
+# ownership instead of defaulting to root.
+RUN mkdir -p /app/uploads/avatars && chown -R node:node /app/uploads
+
+USER node
+
 EXPOSE 3001
 
 CMD ["npm", "run", "dev"]

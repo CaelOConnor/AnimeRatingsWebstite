@@ -245,7 +245,10 @@ export default function UserProfile() {
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 2500);
     } catch (err) {
-      setProfileError(err.message || 'Failed to save profile.');
+      // A 409 means the username is taken — surface that distinctly from
+      // other failures (network errors, validation, etc.) rather than
+      // relying on the backend's error wording matching exactly.
+      setProfileError(err.status === 409 ? 'That username is already taken.' : (err.message || 'Failed to save profile.'));
     } finally {
       setProfileSaving(false);
     }

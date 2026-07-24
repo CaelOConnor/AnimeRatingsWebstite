@@ -8,7 +8,6 @@ const FEEDBACK_TYPE_LABELS = {
   bug_report:   'Bug Report',
 };
 
-const API_BASE   = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const TMDB_THUMB = 'https://image.tmdb.org/t/p/w92';
 
 export default function Admin() {
@@ -99,9 +98,9 @@ export default function Admin() {
     }
   }
 
-  // Add the selected candidate to the catalog. Uses a raw fetch (not the
-  // shared `api` helper) because the 200-vs-201 status distinguishes
-  // "already cached" from "newly added", and `api`'s wrapper only returns
+  // Add the selected candidate to the catalog. Uses `api.raw.post` (not the
+  // plain `api.post` shorthand) because the 200-vs-201 status distinguishes
+  // "already cached" from "newly added", and the shorthand only resolves to
   // the parsed body — not the status code.
   async function handleAddShowConfirm(candidate) {
     setAddingId(candidate.id);
@@ -117,15 +116,9 @@ export default function Admin() {
     const qs = params.toString();
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/anime/fetch/${candidate.id}${qs ? `?${qs}` : ''}`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to add show.');
+      const { data, status } = await api.raw.post(`/api/anime/fetch/${candidate.id}${qs ? `?${qs}` : ''}`);
 
-      const message = res.status === 201 ? `Added: ${data.title}` : `Already in catalog: ${data.title}`;
+      const message = status === 201 ? `Added: ${data.title}` : `Already in catalog: ${data.title}`;
       setAddResult({ id: candidate.id, success: true, message });
     } catch (err) {
       setAddResult({ id: candidate.id, success: false, message: err.message || 'Failed to add show.' });

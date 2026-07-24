@@ -7,7 +7,7 @@
     radial-gradient(ellipse at 60% 40%, rgba(124, 111, 205, 0.12) 0%, transparent 65%),
     radial-gradient(ellipse at 20% 80%, rgba(124, 111, 205, 0.07) 0%, transparent 55%),
     var(--color-bg);
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
 
 .register-card {
@@ -23,12 +23,12 @@
 }
 
 .register-card__body {
-  padding: 2.5rem 2.25rem 2.25rem;
+  padding: var(--space-10) 2.25rem 2.25rem;
 }
 
 .register-card__title {
   font-size: 1.6rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0 0 1.75rem;
   letter-spacing: -0.02em;
@@ -41,8 +41,8 @@
   color: var(--color-danger);
   border-radius: var(--radius-md);
   padding: 0.65rem 0.9rem;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-5);
 }
 
 /* Form */
@@ -55,12 +55,12 @@
 .register-form__field {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-1-5);
 }
 
 .register-form__label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   letter-spacing: 0.01em;
 }
@@ -71,7 +71,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-md);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-md);
   color: var(--color-text-primary);
   background: var(--color-bg);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -86,14 +86,14 @@
 /* Submit button */
 .register-form__submit {
   height: 2.75rem;
-  margin-top: 0.4rem;
+  margin-top: var(--space-1-5);
   background: var(--color-accent);
   color: var(--color-text-on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: background var(--transition-fast), opacity var(--transition-fast);
 }
@@ -110,14 +110,14 @@
 /* Footer link */
 .register-footer {
   margin-top: 1.4rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   text-align: center;
 }
 
 .register-footer a {
   color: var(--color-accent);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .register-form__hint {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  margin-top: 0.1rem;
+  margin-top: var(--space-0-5);
 }

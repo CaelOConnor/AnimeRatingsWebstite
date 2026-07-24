@@ -44,15 +44,15 @@
 }
 
 .anime-card__fallback-star {
-  font-size: 28px;
+  font-size: var(--font-size-4xl);
   color: rgba(255, 255, 255, 0.4);
 }
 
 /* Rating badge */
 .anime-card__rating-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: var(--space-2);
+  right: var(--space-2);
   display: flex;
   align-items: center;
   gap: 3px;
@@ -62,21 +62,21 @@
   backdrop-filter: blur(4px);
   color: #fff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Info */
 .anime-card__info {
-  padding: 10px 12px 12px;
+  padding: var(--space-2-5) var(--space-3) var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .anime-card__title {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   line-height: 1.35;
   display: -webkit-box;
@@ -96,8 +96,8 @@
 .anime-card__tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
+  gap: var(--space-1);
+  margin-top: var(--space-0-5);
 }
 
 .anime-card__tag {
@@ -106,7 +106,7 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-tertiary);
   white-space: nowrap;
 }

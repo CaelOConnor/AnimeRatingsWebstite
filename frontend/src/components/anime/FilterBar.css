@@ -1,18 +1,18 @@
 .filter-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .filter-bar__select {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text-primary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
 }
 
@@ -21,12 +21,12 @@
 }
 
 .filter-bar__genre-toggle {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text-primary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
 }
 
@@ -36,13 +36,13 @@
 
 .filter-bar__genre-menu {
   position: absolute;
-  top: calc(100% + 0.25rem);
+  top: calc(100% + var(--space-1));
   left: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.75rem;
+  gap: var(--space-1-5);
+  padding: var(--space-3);
   max-height: 280px;
   overflow-y: auto;
   background: var(--color-surface);
@@ -55,19 +55,19 @@
 .filter-bar__genre-option {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
   cursor: pointer;
 }
 
 .filter-bar__clear {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-accent-dark);
-  font-size: 0.875rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
   text-decoration: underline;
 }

@@ -1,7 +1,7 @@
 .admin {
   min-height: 100vh;
   background: var(--color-bg);
-  padding: 32px 24px 64px;
+  padding: var(--space-8) var(--space-6) var(--space-16);
 }
 
 .admin__container {
@@ -10,20 +10,20 @@
 }
 
 .admin__title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-6);
 }
 
 .admin__section {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: var(--space-6);
 }
 
 .admin__section--spaced {
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 .admin__section-header {
@@ -31,13 +31,13 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .admin__section-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0;
 }
@@ -45,16 +45,16 @@
 .admin__controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
 .admin__search {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-text-tertiary);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
   min-width: 240px;
 }
@@ -68,26 +68,26 @@
 .admin__toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: var(--space-1-5);
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .admin__error {
-  background: var(--color-danger-light); 
+  background: var(--color-danger-light);
   color: var(--color-danger);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  padding: var(--space-2-5) 14px;
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-4);
 }
 
 .admin__state {
   color: var(--color-text-secondary);
-  font-size: 14px;
-  padding: 32px 0;
+  font-size: var(--font-size-base);
+  padding: var(--space-8) 0;
   text-align: center;
 }
 
@@ -102,20 +102,20 @@
 .admin__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .admin__table th {
   text-align: left;
-  padding: 10px 12px;
-  font-weight: 600;
+  padding: var(--space-2-5) var(--space-3);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   border-bottom: 1px solid var(--color-bg);
   white-space: nowrap;
 }
 
 .admin__table td {
-  padding: 12px;
+  padding: var(--space-3);
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-bg);
   vertical-align: middle;
@@ -125,8 +125,8 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: capitalize;
   background: var(--color-bg);
   color: var(--color-text-secondary);
@@ -146,8 +146,8 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .admin__status--active {
@@ -162,7 +162,7 @@
 
 .admin__actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   white-space: nowrap;
 }
 
@@ -174,8 +174,8 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
 
@@ -198,8 +198,8 @@
 /* ── Add a Show ──────────────────────────────────────────────────────────── */
 .admin__add-show-form {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .admin__add-show-form .admin__search {
@@ -210,14 +210,14 @@
 .admin__add-show-results {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .admin__add-show-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  padding: var(--space-2-5) 14px;
   border-radius: var(--radius-md);
   background: var(--color-bg);
 }
@@ -240,28 +240,28 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .admin__add-show-title {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .admin__add-show-meta {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
 
 .admin__add-show-season {
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   width: 160px;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-text-tertiary);
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-primary);
 }
 
@@ -272,9 +272,9 @@
 }
 
 .admin__add-show-result {
-  margin: 2px 0 0;
-  font-size: 12px;
-  font-weight: 600;
+  margin: var(--space-0-5) 0 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-success);
 }
 
@@ -285,10 +285,10 @@
 .admin__btn {
   border: none;
   border-radius: var(--radius-md);
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: opacity var(--transition-fast) ease;
 }
@@ -326,13 +326,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--space-1-5);
   white-space: nowrap;
 }
 
 .admin__feedback-resolve-error {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-danger);
   white-space: normal;
 }

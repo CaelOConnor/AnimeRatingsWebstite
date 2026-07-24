@@ -30,9 +30,10 @@
   /* ── Page background & surfaces ── */
   --color-bg:              #F7F7FB;   /* page background */
   --color-surface:         #FFFFFF;   /* cards, modals */
-  --color-surface-hover:   #F0EFF8;
-  --color-border:          #E2E0F0;
+  --color-surface-hover:   #F0EFF8;   /* also covers former near-miss greys #F0EFF7/#f0eef9/#ebebf5 */
+  --color-border:          #E2E0F0;   /* also covers former near-miss greys #EBEBF0/#e8e7f0/#ebebf5/#ddd */
   --color-border-focus:    #7C6FCD;
+  --color-skeleton-base:   #EDE9F7;   /* loading-skeleton shimmer */
 
   /* ── Text ── */
   --color-text-primary:    #1A1830;
@@ -73,4 +74,43 @@
 
   /* ── Typography ── */
   --font-sans: 'DM Sans', system-ui, sans-serif;
+
+  /* ── Font sizes ──
+     Named by frequency/rank in the existing UI, not literal pixel jumps —
+     several near-duplicate legacy values (e.g. 0.85/0.875/0.9rem) were
+     folded into the nearest step below since the difference is sub-pixel. */
+  --font-size-xs:    0.75rem;    /* 12px */
+  --font-size-sm:    0.8125rem;  /* 13px */
+  --font-size-base:  0.875rem;   /* 14px — most common UI text size */
+  --font-size-md:    0.9375rem;  /* 15px */
+  --font-size-lg:    1rem;       /* 16px */
+  --font-size-xl:    1.1rem;     /* 17.6px */
+  --font-size-2xl:   1.25rem;    /* 20px */
+  --font-size-3xl:   1.5rem;     /* 24px */
+  --font-size-4xl:   1.75rem;    /* 28px */
+  --font-size-5xl:   2rem;       /* 32px */
+
+  /* ── Font weights ── */
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* ── Spacing scale ──
+     Matches the increments already in common use (multiples of 4px);
+     values not on this scale were intentional one-off fine-tuning and
+     are left as literals rather than forced onto the nearest step. */
+  --space-0-5: 0.125rem;  /* 2px */
+  --space-1:   0.25rem;   /* 4px */
+  --space-1-5: 0.375rem;  /* 6px */
+  --space-2:   0.5rem;    /* 8px */
+  --space-2-5: 0.625rem;  /* 10px */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
 }

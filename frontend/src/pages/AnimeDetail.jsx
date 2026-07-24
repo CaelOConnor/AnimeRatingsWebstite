@@ -223,11 +223,20 @@ export default function AnimeDetail() {
   return (
     <div className="anime-detail">
 
-      {/* Display the anime's backdrop image behind the page header. */}
-      {anime.backdrop_path && (
+      {/* Display a background image behind the page header. TMDB doesn't
+          provide a per-season backdrop — only a per-season poster — so this
+          follows the currently-viewed season's poster (which does vary from
+          season to season) rather than the show-level backdrop (which is
+          identical across every season of the same show). Falls back to the
+          show-level backdrop only if this particular row has no poster at all. */}
+      {(anime.poster_path || anime.backdrop_path) && (
         <div
           className="anime-detail__backdrop"
-          style={{ backgroundImage: `url(${TMDB_BACKDROP_BASE}${anime.backdrop_path})` }}
+          style={{
+            backgroundImage: `url(${anime.poster_path
+              ? `${TMDB_IMG_BASE}${anime.poster_path}`
+              : `${TMDB_BACKDROP_BASE}${anime.backdrop_path}`})`,
+          }}
         >
           <div className="anime-detail__backdrop-overlay" />
         </div>
@@ -309,14 +318,14 @@ export default function AnimeDetail() {
             className="anime-detail__action-btn anime-detail__action-btn--primary"
             onClick={() => { setShowReviewForm(v => !v); setShowRatingForm(false); }}
           >
-            {showReviewForm ? 'Cancel' : '✏️ Write a Review'}
+            {showReviewForm ? 'Cancel' : 'Write a Review'}
           </button>
 
           <button
             className="anime-detail__action-btn anime-detail__action-btn--secondary"
             onClick={() => { setShowRatingForm(v => !v); setShowReviewForm(false); }}
           >
-            {showRatingForm ? 'Cancel' : `⭐ ${userReview?.rating != null ? `Rated ${userReview.rating}` : 'Rate'}`}
+            {showRatingForm ? 'Cancel' : (userReview?.rating != null ? `Rated ${userReview.rating}` : 'Rate')}
           </button>
 
           <select
@@ -461,7 +470,7 @@ export default function AnimeDetail() {
                       to={`/reviews/${review.id}`}
                       className="anime-detail__review-btn"
                     >
-                      💬 Comments
+                      Comments
                     </Link>
                     {/* Allow users to report reviews written by other users. */}
                     {isLoggedIn && review.user_id !== user.id && (
@@ -470,7 +479,7 @@ export default function AnimeDetail() {
                         onClick={() => handleReport(review)}
                         disabled={reportedReviews.has(review.id)}
                       >
-                        {reportedReviews.has(review.id) ? 'Reported' : '🚩 Report'}
+                        {reportedReviews.has(review.id) ? 'Reported' : 'Report'}
                       </button>
                     )}
                   </div>

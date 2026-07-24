@@ -288,7 +288,7 @@ export default function ReviewDetail() {
                     }
                   }}
                 >
-                  {reported ? 'Reported' : '🚩 Report'}
+                  {reported ? 'Reported' : 'Report'}
                 </button>
               )}
             </div>
