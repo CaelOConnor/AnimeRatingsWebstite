@@ -29,10 +29,10 @@ jobs:
           EOF
 
       - name: Run backend tests
-        run: docker compose -f docker-compose.yml run --rm backend npx vitest run
+        run: docker compose -f docker-compose.yml run --rm --user root backend npx vitest run
 
       - name: Run frontend tests
-        run: docker compose -f docker-compose.yml run --rm frontend npx vitest run
+        run: docker compose -f docker-compose.yml run --rm --user root frontend npx vitest run
 
       - name: Clean up
         if: always()
