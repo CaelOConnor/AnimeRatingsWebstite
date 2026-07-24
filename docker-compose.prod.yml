@@ -9,9 +9,9 @@ services:
   frontend:
     build:
       target: production
-    ports: !reset []        # Nginx handles routing, don't expose directly
-    environment:
-      - VITE_API_URL=${PROD_API_URL}
+      args:
+        - VITE_API_URL=${PROD_API_URL}
+    ports: !reset []
 
   backend:
     build:
