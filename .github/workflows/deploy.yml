@@ -5,7 +5,41 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create CI-only env file
+        run: |
+          cat > .env << 'EOF'
+          DB_NAME=ci_db
+          DB_USER=ci_user
+          DB_PASSWORD=ci_pass
+          DB_NAME_TEST=ci_db_test
+          DB_USER_TEST=ci_user_test
+          DB_PASSWORD_TEST=ci_pass_test
+          DB_APP_USER=ci_app_user
+          DB_APP_PASSWORD=ci_app_pass
+          JWT_SECRET=ci_only_secret_never_used_in_prod
+          JWT_EXPIRES_IN=7d
+          TMDB_API_KEY=dummy
+          CORS_ORIGIN=http://localhost:5173
+          REDIS_PASSWORD=ci_redis_pass
+          EOF
+
+      - name: Run backend tests
+        run: docker compose -f docker-compose.yml run --rm backend npx vitest run
+
+      - name: Run frontend tests
+        run: docker compose -f docker-compose.yml run --rm frontend npx vitest run
+
+      - name: Clean up
+        if: always()
+        run: docker compose -f docker-compose.yml down -v
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: SSH and deploy
