@@ -11,7 +11,7 @@ function Logo() {
   return (
     <Link to="/" className="navbar__logo">
       <span className="navbar__logo-star">✦</span>
-      ShowRater
+      AnimeRatings
     </Link>
   );
 }
