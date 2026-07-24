@@ -223,20 +223,11 @@ export default function AnimeDetail() {
   return (
     <div className="anime-detail">
 
-      {/* Display a background image behind the page header. TMDB doesn't
-          provide a per-season backdrop — only a per-season poster — so this
-          follows the currently-viewed season's poster (which does vary from
-          season to season) rather than the show-level backdrop (which is
-          identical across every season of the same show). Falls back to the
-          show-level backdrop only if this particular row has no poster at all. */}
-      {(anime.poster_path || anime.backdrop_path) && (
+      {/* Display the anime's backdrop image behind the page header. */}
+      {anime.backdrop_path && (
         <div
           className="anime-detail__backdrop"
-          style={{
-            backgroundImage: `url(${anime.poster_path
-              ? `${TMDB_IMG_BASE}${anime.poster_path}`
-              : `${TMDB_BACKDROP_BASE}${anime.backdrop_path}`})`,
-          }}
+          style={{ backgroundImage: `url(${TMDB_BACKDROP_BASE}${anime.backdrop_path})` }}
         >
           <div className="anime-detail__backdrop-overlay" />
         </div>
